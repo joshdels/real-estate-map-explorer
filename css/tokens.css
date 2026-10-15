@@ -1,0 +1,8 @@
+:root {
+  color-scheme: light;
+  --color-ink: #17242f; --color-muted: #66788a; --color-surface: #fff; --color-soft: #f3f6f8;
+  --color-border: #dce4e8; --color-brand: #1d4ed8; --color-brand-dark: #173b96;
+  --color-accent: #00b984; --color-danger: #e51c2b; --color-message: #078ae1;
+  --radius-sm: 8px; --radius-md: 14px; --radius-lg: 22px;
+  --shadow-float: 0 14px 40px rgba(10, 26, 35, .22); --panel-width: min(31rem, 100vw);
+}

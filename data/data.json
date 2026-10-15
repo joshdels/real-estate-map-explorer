@@ -1,0 +1,81 @@
+{
+  "metadata": {
+    "name": "Real Estate Map Explorer sample dataset",
+    "version": 1,
+    "isSample": true,
+    "notice": "Property records, prices, coordinates, boundaries, routes, and availability are sample content and must be verified."
+  },
+  "agent": {
+    "initials": "EC",
+    "name": "Eric Costuna",
+    "role": "Property Specialist",
+    "phoneDisplay": "0928 535 4832",
+    "phoneHref": "+639285354832",
+    "messengerUrl": "https://www.messenger.com/"
+  },
+  "utilities": {
+    "Electricity": ["Eastern Regional Electric", "Solar-ready"],
+    "Water": ["Municipal Water", "Deepwell"],
+    "Mobile": ["CellOne", "Sample Mobile"],
+    "Internet": ["FiberLink", "Sample Broadband"],
+    "Cable": ["Community Cable"]
+  },
+  "properties": [
+    {
+      "id": "property-001", "title": "LOT 001", "address": "Sample Maharlika Avenue", "coordinates": [6.9547, 126.2155],
+      "polygon": [[6.95505,126.21515],[6.95505,126.21585],[6.95435,126.21585],[6.95435,126.21515]],
+      "area": "500 sqm", "price": 2500000, "measurements": "25m × 20m", "status": "Available",
+      "description": "Fictional residential lot with sample road access, a level building area, and nearby reference destinations.",
+      "utilities": {"Electricity":"Eastern Regional Electric","Water":"Municipal Water, Deepwell","Mobile":"CellOne, Sample Mobile","Internet":"FiberLink","Cable":"Community Cable"},
+      "media": {"panoramaUrl":"https://pannellum.org/images/alma.jpg","aerialVideoUrl":"https://www.youtube.com/watch?v=M7lc1UVf-VE","walkthroughVideoUrl":"https://www.youtube.com/watch?v=M7lc1UVf-VE"}
+    },
+    {
+      "id": "property-002", "title": "LOT 002", "address": "Sample Coastal Road", "coordinates": [6.9537, 126.217],
+      "polygon": [[6.95402,126.2167],[6.95402,126.2173],[6.95338,126.2173],[6.95338,126.2167]],
+      "area": "420 sqm", "price": 2100000, "measurements": "21m × 20m", "status": "Available",
+      "description": "Fictional corner lot intended to showcase property selection, dimensions, media, and routes.",
+      "utilities": {"Electricity":"Eastern Regional Electric","Water":"Municipal Water","Mobile":"CellOne","Internet":"Sample Broadband","Cable":"Community Cable"},
+      "media": {"panoramaUrl":"https://pannellum.org/images/alma.jpg","aerialVideoUrl":"https://www.youtube.com/watch?v=M7lc1UVf-VE","walkthroughVideoUrl":"https://www.youtube.com/watch?v=M7lc1UVf-VE"}
+    },
+    {
+      "id": "property-003", "title": "LOT 003", "address": "Riverside Drive", "coordinates": [6.9528, 126.2139],
+      "polygon": [[6.95312,126.2136],[6.95308,126.2142],[6.95248,126.21418],[6.9525,126.21358]],
+      "area": "360 sqm", "price": 1850000, "measurements": "18m × 20m", "status": "Reserved",
+      "description": "Fictional riverside listing used to test reserved-property styling and route overlays.",
+      "utilities": {"Electricity":"Solar-ready","Water":"Deepwell","Mobile":"Sample Mobile","Internet":"FiberLink","Cable":"Not specified"},
+      "media": {"panoramaUrl":"https://pannellum.org/images/alma.jpg","aerialVideoUrl":"","walkthroughVideoUrl":""}
+    },
+    {
+      "id": "property-004", "title": "LOT 004", "address": "Example Garden Street", "coordinates": [6.957, 126.218],
+      "polygon": [[6.95738,126.21765],[6.95735,126.21835],[6.95662,126.21832],[6.95665,126.21762]],
+      "area": "625 sqm", "price": 3200000, "measurements": "25m × 25m", "status": "Available",
+      "description": "Large fictional square lot created to showcase a different area and perimeter configuration.",
+      "utilities": {"Electricity":"Eastern Regional Electric","Water":"Municipal Water","Mobile":"CellOne, Sample Mobile","Internet":"FiberLink, Sample Broadband","Cable":"Community Cable"},
+      "media": {"panoramaUrl":"https://pannellum.org/images/alma.jpg","aerialVideoUrl":"https://www.youtube.com/watch?v=M7lc1UVf-VE","walkthroughVideoUrl":""}
+    },
+    {
+      "id": "property-005", "title": "LOT 005", "address": "Mock Market Lane", "coordinates": [6.9562, 126.2125],
+      "polygon": [[6.95652,126.21216],[6.95658,126.21275],[6.9559,126.21284],[6.95586,126.21224]],
+      "area": "450 sqm", "price": 2300000, "measurements": "22.5m × 20m", "status": "Sold",
+      "description": "Fictional sold listing used to test historical availability and comparison behavior.",
+      "utilities": {"Electricity":"Eastern Regional Electric","Water":"Municipal Water","Mobile":"CellOne","Internet":"Sample Broadband","Cable":"Community Cable"},
+      "media": {"panoramaUrl":"","aerialVideoUrl":"","walkthroughVideoUrl":""}
+    }
+  ],
+  "destinations": [
+    {"id":"school-001","name":"Community Learning Center","type":"school","coordinates":[6.959,126.214]},
+    {"id":"bank-001","name":"Sample Community Bank","type":"bank","coordinates":[6.9515,126.216]},
+    {"id":"store-001","name":"Town Center Market","type":"store","coordinates":[6.9555,126.2105]},
+    {"id":"clinic-001","name":"Example Health Center","type":"landmark","coordinates":[6.9582,126.2202]},
+    {"id":"terminal-001","name":"Mock Transport Terminal","type":"landmark","coordinates":[6.95,126.212]}
+  ],
+  "routes": [
+    {"id":"route-001-school","propertyId":"property-001","destinationId":"school-001"},
+    {"id":"route-001-bank","propertyId":"property-001","destinationId":"bank-001"},
+    {"id":"route-002-store","propertyId":"property-002","destinationId":"store-001"},
+    {"id":"route-003-terminal","propertyId":"property-003","destinationId":"terminal-001"},
+    {"id":"route-004-clinic","propertyId":"property-004","destinationId":"clinic-001"},
+    {"id":"route-004-school","propertyId":"property-004","destinationId":"school-001"},
+    {"id":"route-005-store","propertyId":"property-005","destinationId":"store-001"}
+  ]
+}

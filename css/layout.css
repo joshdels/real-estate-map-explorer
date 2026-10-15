@@ -1,0 +1,36 @@
+html, body, .app-shell, .map { width: 100%; height: 100%; min-height: 100%; }
+html, body, .app-shell { height: 100dvh; min-height: 100dvh; }
+body { overflow: hidden; background: #12322d; }
+.app-shell { position: relative; isolation: isolate; }
+.map { position: absolute; z-index: 0; inset: 0; background: #173a36; }
+.map-actions { position: absolute; z-index: 500; top: max(18px, env(safe-area-inset-top)); right: max(22px, env(safe-area-inset-right)); }
+.agent-card { position: absolute; z-index: 500; right: max(22px, env(safe-area-inset-right)); bottom: max(22px, env(safe-area-inset-bottom)); }
+.details-panel { position: fixed; z-index: 800; top: 0; right: 0; width: min(var(--panel-width), 100vw); height: 100dvh; transform: translateX(104%); transition: transform .3s cubic-bezier(.2,.75,.2,1); }
+.details-panel.is-open { transform: translateX(0); }
+.admin-panel { position: fixed; z-index: 850; top: 0; left: 0; width: min(420px, 100vw); height: 100dvh; transform: translateX(-104%); transition: transform .3s cubic-bezier(.2,.75,.2,1); }
+.admin-panel.is-open { transform: translateX(0); }
+@media (max-width: 700px) {
+  .map-actions { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); gap: 7px; } .round-button { width: 44px; height: 44px; font-size: 1.3rem; }
+  .agent-card { right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); width: 230px; padding: 12px; } .agent-heading { margin-bottom: 10px; }
+  .avatar { flex-basis: 42px; height: 42px; font-size: .85rem; } .agent-heading strong { font-size: .85rem; }
+  .agent-heading small { font-size: .72rem; } .contact-button { min-height: 42px; font-size: .74rem; }
+  .details-panel { top: auto; bottom: 0; width: 100%; height: min(82dvh, 720px); transform: translateY(104%); border-radius: 22px 22px 0 0; }
+  .details-panel.is-open { transform: translateY(0); } .details-scroll { padding: 38px 20px max(28px, env(safe-area-inset-bottom)); } .close-button { border-radius: 0 22px 0 14px; }
+  .admin-panel { width: min(420px, 92vw); }
+}
+@media (max-width: 430px) { .agent-card { left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); width: auto; } .property-facts { grid-template-columns: 1fr; } }
+@media (max-width: 380px) {
+  .feature-grid, .form-grid { grid-template-columns: 1fr; }
+  .feature-button:nth-child(5) { grid-column: auto; }
+  .admin-panel { width: 100vw; }
+}
+@media (max-height: 600px) and (orientation: landscape) {
+  .details-panel { top: 0; right: 0; bottom: auto; width: min(480px, 55vw); height: 100dvh; transform: translateX(104%); border-radius: 0; }
+  .details-panel.is-open { transform: translateX(0); }
+  .details-scroll { padding: 34px 24px max(20px, env(safe-area-inset-bottom)); }
+  .admin-panel { width: min(390px, 70vw); }
+  .agent-card { width: 230px; padding: 10px; }
+  .agent-heading { margin-bottom: 8px; }
+  .contact-button { min-height: 38px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }

@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en-PH">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#12322d">
+  <meta name="description" content="Explore available real-estate lots on an interactive satellite map.">
+  <title>Real Estate Map Explorer</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://server.arcgisonline.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.css">
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/components.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.js"></script>
+  <script type="module" src="./js/main.js"></script>
+</head>
+<body>
+  <main class="app-shell" aria-label="Real Estate Map Explorer">
+    <div id="map" class="map" aria-label="Interactive satellite map of available lots"></div>
+    <nav class="map-actions" aria-label="Map actions">
+      <button id="home-button" class="round-button" type="button" aria-label="Return to all properties" title="View all properties">
+        <span class="emoji-icon" aria-hidden="true">🏠</span>
+      </button>
+      <button id="admin-button" class="round-button" type="button" aria-label="Open admin console" title="Open admin console">🔐</button>
+    </nav>
+    <section class="agent-card" aria-label="Property specialist">
+      <div class="agent-heading"><span id="agent-initials" class="avatar" aria-hidden="true">EC</span><span><strong id="agent-name">Eric Costuna</strong><small id="agent-role">Property Specialist</small></span></div>
+      <a id="agent-call" class="contact-button contact-call" href="tel:+639285354832">
+        <span class="contact-emoji" aria-hidden="true">📞</span>
+        <span id="agent-phone">Call: 0928 535 4832</span>
+      </a>
+      <a id="agent-message" class="contact-button contact-message" href="https://www.messenger.com/" target="_blank" rel="noopener noreferrer">
+        <span class="contact-emoji" aria-hidden="true">💬</span>
+        <span>Message on Messenger</span>
+      </a>
+    </section>
+    <aside id="admin-panel" class="admin-panel" aria-labelledby="admin-title" aria-hidden="true">
+      <header class="admin-header">
+        <div><h1 id="admin-title">Smart Property Solutions</h1><p>Manage properties, routes &amp; destinations</p></div>
+        <button id="close-admin" class="admin-close" type="button" aria-label="Close admin console">×</button>
+      </header>
+      <nav class="admin-tabs" aria-label="Admin sections">
+        <button type="button" data-admin-tab="properties" class="is-active">Properties</button>
+        <button type="button" data-admin-tab="utilities">Utilities</button>
+        <button type="button" data-admin-tab="routes">Routes</button>
+        <button type="button" data-admin-tab="locations">Locations</button>
+      </nav>
+      <div class="admin-scroll">
+        <section data-admin-view="properties">
+          <form id="property-form" class="admin-form">
+            <h2>Add a property</h2><p class="form-help">Create a temporary listing and pin its boundary directly on the map.</p>
+            <label>Lot name / ID<input name="title" required placeholder="e.g., LOT 003"></label>
+            <label>Street name<input name="address" required placeholder="e.g., Maharlika Avenue"></label>
+            <fieldset><legend>Property boundary</legend><div id="boundary-points" class="point-list"></div>
+              <button id="pin-boundary" class="outline-button" type="button">＋ Start pinning on map</button>
+              <p class="form-help">Add at least three points. Click the first point again or press “Finish boundary” when done.</p>
+            </fieldset>
+            <div class="form-grid"><label>Area<input name="area" required placeholder="500 sqm"></label><label>Price (PHP)<input name="price" required type="number" min="0" step="1" placeholder="2500000"></label></div>
+            <label>Measurements<input name="measurements" placeholder="25m × 20m"></label>
+            <label>Status<select name="status"><option>Available</option><option>Reserved</option><option>Sold</option></select></label>
+            <label>Description<textarea name="description" rows="4" placeholder="Property description"></textarea></label>
+            <fieldset><legend>Property media</legend>
+              <label>360° panorama image URL<input name="panoramaUrl" type="url" placeholder="https://example.com/panorama.jpg"></label>
+              <label>Drone / aerial video URL<input name="aerialVideoUrl" type="url" placeholder="YouTube or direct video URL"></label>
+              <label>Walkthrough video URL<input name="walkthroughVideoUrl" type="url" placeholder="YouTube or direct video URL"></label>
+              <p class="form-help">Use a CORS-enabled equirectangular image for 360° viewing. YouTube watch, share, and embed links are supported.</p>
+            </fieldset>
+            <button class="save-button" type="submit">Save property</button>
+          </form>
+          <div><h2>Temporary property feed</h2><div id="property-feed" class="admin-feed"></div></div>
+        </section>
+        <section data-admin-view="utilities" hidden>
+          <form id="utilities-form" class="admin-form">
+            <h2>⚡ Utility services</h2><p class="form-help">Comma-separated options are applied to newly created properties.</p>
+            <label>Electricity options<input name="Electricity" placeholder="ESAMELCO, No Power Line"></label>
+            <label>Water options<input name="Water" placeholder="Deepwell, NAWASA"></label>
+            <label>Mobile options<input name="Mobile" placeholder="Smart, Globe"></label>
+            <label>Internet options<input name="Internet" placeholder="PLDT, Smart, Netcamp"></label>
+            <label>Cable options<input name="Cable" placeholder="Amboy"></label>
+            <button class="save-button" type="submit">Save utility options</button>
+          </form>
+        </section>
+        <section data-admin-view="routes" hidden>
+          <form id="route-form" class="admin-form">
+            <h2>🛣 Manual routes</h2><p class="form-help">Attach a destination to a property. The application draws a direct reference line.</p>
+            <label>Property<select id="route-property" name="propertyId" required></select></label>
+            <label>Destination<select id="route-destination" name="destinationId" required></select></label>
+            <button class="save-button" type="submit">Add route</button>
+          </form>
+          <div id="route-feed" class="admin-feed"></div>
+        </section>
+        <section data-admin-view="locations" hidden>
+          <form id="location-form" class="admin-form">
+            <h2>📍 Destination points</h2><p class="form-help">Save schools, banks, stores, and landmarks for route planning.</p>
+            <label>Name<input name="name" required placeholder="e.g., Eastern Samar State University"></label>
+            <label>Type<select name="type"><option value="school">School</option><option value="bank">Bank</option><option value="store">Store / Mall</option><option value="landmark">Landmark</option></select></label>
+            <div class="form-grid"><label>Latitude<input name="lat" required type="number" step="any"></label><label>Longitude<input name="lng" required type="number" step="any"></label></div>
+            <button id="use-map-location" class="outline-button" type="button">⌖ Pick location on map</button>
+            <button class="save-button" type="submit">Save destination point</button>
+          </form>
+          <div><h2>Saved destinations</h2><div id="location-feed" class="admin-feed"></div></div>
+        </section>
+      </div>
+    </aside>
+    <aside id="details-panel" class="details-panel" aria-labelledby="property-title" aria-hidden="true">
+      <button id="close-details" class="close-button" type="button" aria-label="Close property details">×</button>
+      <div class="details-scroll">
+        <p class="panel-kicker">Available property</p>
+        <h1 id="property-title">Lot details</h1>
+        <p id="property-address" class="property-address"></p>
+        <dl class="property-facts">
+          <div><dt>Area</dt><dd id="property-area"></dd></div><div><dt>Price</dt><dd id="property-price"></dd></div>
+          <div><dt>Measurements</dt><dd id="property-measurements"></dd></div><div><dt>Status</dt><dd><span id="property-status" class="status-pill"></span></dd></div>
+        </dl>
+        <div id="property-media" class="feature-grid" aria-label="Property media and navigation"></div>
+        <section class="detail-section"><h2>Description</h2><p id="property-description"></p></section>
+        <section class="detail-section"><h2><span aria-hidden="true">⌁</span> Utilities available</h2><dl id="property-utilities" class="detail-list"></dl></section>
+        <section class="detail-section"><h2><span aria-hidden="true">⌖</span> Nearby routes</h2><ul id="property-routes" class="route-list"></ul></section>
+        <p class="data-note">Property information shown here is sample content and must be independently verified.</p>
+      </div>
+    </aside>
+    <div id="admin-dialog" class="dialog-backdrop" hidden>
+      <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="admin-access-title">
+        <button id="cancel-admin" class="dialog-close" type="button" aria-label="Cancel admin access">×</button><span class="dialog-icon" aria-hidden="true">🔐</span>
+        <h2 id="admin-access-title">Admin access</h2><p>Enter the local access passcode: <strong>admin</strong>.</p>
+        <form id="admin-access-form"><label class="dialog-label">Passcode<input id="admin-passcode" type="password" required autocomplete="current-password"></label><p id="admin-access-error" class="form-error" role="alert"></p><button class="primary-button" type="submit">Access admin panel</button></form>
+      </section>
+    </div>
+    <div id="media-dialog" class="media-backdrop" hidden>
+      <section class="media-dialog" role="dialog" aria-modal="true" aria-labelledby="media-title">
+        <header><div><span class="panel-kicker">Property media</span><h2 id="media-title">Media viewer</h2></div><button id="close-media" type="button" aria-label="Close media viewer">×</button></header>
+        <div id="media-stage" class="media-stage"></div>
+        <p id="media-caption" class="media-caption"></p>
+      </section>
+    </div>
+    <noscript><p class="fatal-message">JavaScript is required to use the interactive property map.</p></noscript>
+    <div id="app-status" class="fatal-message" role="alert" hidden></div>
+  </main>
+</body>
+</html>
