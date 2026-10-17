@@ -79,6 +79,7 @@ Local overrides use `real-estate-map-explorer.data.v6`. Clear site data to resto
 ```
 
 The admin accepts one image URL per line. Only HTTP(S) URLs survive validation. Remote hosts must permit browser loading or embedding.
+Bundled sample media uses root-relative `/images/...` paths, which the viewer resolves against the configured Vite deployment base.
 
 ## Architecture
 

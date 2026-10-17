@@ -2,6 +2,16 @@ import { qs } from "./dom";
 import type { MediaRequest } from "./types";
 import { validMediaUrl } from "./validation";
 
+export function resolveMediaUrl(
+  url: string,
+  base = import.meta.env.BASE_URL,
+): string {
+  if (!url.startsWith("/")) return url;
+
+  const baseUrl = new URL(base, window.location.origin);
+  return new URL(url.slice(1), baseUrl).href;
+}
+
 declare global {
   interface Window {
     pannellum?: {
@@ -101,7 +111,7 @@ export class MediaViewer {
     this.galleryIndex =
       (index + this.galleryUrls.length) % this.galleryUrls.length;
     const image = document.createElement("img");
-    image.src = this.galleryUrls[this.galleryIndex];
+    image.src = resolveMediaUrl(this.galleryUrls[this.galleryIndex]);
     image.alt = `${title}, image ${this.galleryIndex + 1} of ${this.galleryUrls.length}`;
     const previous = galleryButton("Previous image", "‹", () =>
       this.nextGallery(-1),
@@ -123,7 +133,7 @@ export class MediaViewer {
     }
     this.viewer = window.pannellum.viewer(container, {
       type: "equirectangular",
-      panorama: url,
+      panorama: resolveMediaUrl(url),
       autoLoad: true,
       showControls: true,
       compass: false,
@@ -134,7 +144,7 @@ export class MediaViewer {
   private content(url: string, type: string, title: string): HTMLElement {
     if (type === "image") {
       const image = document.createElement("img");
-      image.src = url;
+      image.src = resolveMediaUrl(url);
       image.alt = title;
       return image;
     }
@@ -150,7 +160,7 @@ export class MediaViewer {
       return iframe;
     }
     const video = document.createElement("video");
-    video.src = url;
+    video.src = resolveMediaUrl(url);
     video.controls = true;
     video.playsInline = true;
     return video;
