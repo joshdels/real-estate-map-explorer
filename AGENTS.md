@@ -8,12 +8,12 @@ The repository contains a standalone reconstruction of the supplied Canva map sc
 
 ## Source of truth
 
-- `index.html`, `css/`, and `js/` are the maintained application source.
+- `index.html`, `css/`, and `src/` are the maintained Vite + TypeScript application source.
 - `canva.html` is a saved Canva export and reference artifact. It is generated, includes Canva runtime markup, and points to a missing `canva_files/index.html`.
 - `data/data.json` is the editable, clearly fictional seed dataset for properties, utilities, destinations, and routes.
-- `js/config.js` contains map configuration and public action definitions; do not duplicate seed records there.
-- `js/store.js` owns browser-local persistence in `localStorage`; UI modules must not write storage directly.
-- `js/map-controller.js`, `js/details.js`, and `js/admin.js` own map rendering, public details, and admin workflows respectively. Keep `js/main.js` limited to composition and top-level coordination.
+- `src/config.ts` contains map configuration and public action definitions; do not duplicate seed records there.
+- `src/store.ts` and `src/repositories/` own persistence and Supabase fallback behavior; UI modules must not write storage directly.
+- `src/map-controller.ts`, `src/details.ts`, and `src/admin.ts` own map rendering, public details, and admin workflows respectively. Keep `src/main.ts` limited to composition and top-level coordination.
 - `README.md` documents the current limitations and intended product direction.
 
 Do not hand-edit generated sections of `canva.html` for normal feature work. Do not create or assume behavior based solely on class names in that file; they are generated and the actual codelet is absent.
@@ -50,7 +50,7 @@ Optional property media belongs under a `media` object with `panoramaUrl`, `aeri
 - Update `README.md` whenever setup, architecture, dependencies, or product behavior changes.
 - Preserve the module boundaries above. Data mutations go through `PropertyStore`, and map interactions go through `MapController`.
 - Treat browser storage as disposable local state. Any move to production data requires a backend, authenticated authorization, server-side validation, migrations, and backups.
-- Load seed records through `PropertyStore.create()` and validate JSON structure and coordinates before rendering. `data/data.json` changes apply when no version-matching local override exists or after local site data is cleared.
+- Load records through `PropertyStore.initialize()` and validate JSON structure, coordinates, prices, and media URLs before rendering. `data/data.json` changes apply when the local provider has no version-matching override or after local site data is cleared.
 - The `admin` passcode is a visible local-access affordance, not authentication. Never extend it into a false security boundary or store real private listing data behind it.
 
 ## Admin behavior
@@ -62,7 +62,7 @@ Optional property media belongs under a `media` object with `panoramaUrl`, `aeri
 - The home button must exit admin mode, close property details, cancel map-picking mode, and restore the overview.
 - Route lines and destination markers stay hidden by default. Show only the selected property's routes after an explicit **Routes** action, and hide them again when selection closes or changes.
 - Selecting a property keeps dimensions hidden until **Lot Layout** is pressed. That button toggles calculated labels for every polygon edge and the total perimeter. Treat these as geodesic estimates, never surveyed values.
-- Seed and locally created records may be changed or removed in the browser application. These mutations must remain in `localStorage`; never rewrite `data/data.json` from the browser.
+- Seed and locally created records may be changed or removed through `PropertyStore`. Persist them through the configured repository, falling back to `localStorage` when Supabase is unavailable or rejects a write; never rewrite `data/data.json` from the browser.
 - Property media entered through the admin form must persist with its property. Missing media keeps its public action disabled; it must not open an empty or broken viewer.
 - Clearly label all sample and user-entered map data as unverified until a production data-validation workflow exists.
 
@@ -87,7 +87,7 @@ For every change, perform the checks that apply:
 5. Exercise success, empty, loading, and failure states affected by the change.
 6. Confirm that no credentials, private data, or unlicensed assets were added.
 
-There is no automated test suite yet. When one is introduced, document the exact commands here and in `README.md`, and run the smallest relevant tests plus the full suite for cross-cutting changes.
+Run `npm run typecheck`, `npm test`, and `npm run build` for cross-cutting changes. Run the smallest relevant Vitest file while iterating, then the full suite before completion.
 
 ## Definition of done
 

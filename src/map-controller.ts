@@ -1,14 +1,28 @@
-import { config } from "./config.js";
+import L, { type LeafletMouseEvent } from "leaflet";
+import { config } from "./config";
+import type { Coordinate, Dataset, DestinationType, Property } from "./types";
 
 export class MapController {
-  constructor(onPropertySelect) {
-    this.onPropertySelect = onPropertySelect;
-    this.markers = new Map();
-    this.layers = L.layerGroup();
-    this.measurements = L.layerGroup();
-    this.routes = L.layerGroup();
-    this.destinations = L.layerGroup();
-    this.draft = L.layerGroup();
+  private readonly map: L.Map;
+  private readonly layers = L.layerGroup();
+  private readonly measurements = L.layerGroup();
+  private readonly routes = L.layerGroup();
+  private readonly destinations = L.layerGroup();
+  private readonly draft = L.layerGroup();
+  private readonly markers = new Map<string, L.Marker>();
+  private data!: Dataset;
+  private selectedProperty?: Property;
+  private selectedPolygon?: L.Polygon;
+  private mapClickHandler?: (point: Coordinate) => void;
+  private routePropertyId?: string;
+  private measurementPropertyId?: string;
+
+  constructor(
+    private readonly onPropertySelect: (
+      property: Property,
+      trigger?: HTMLElement,
+    ) => void,
+  ) {
     this.map = L.map("map", {
       zoomControl: true,
       minZoom: 3,
@@ -20,16 +34,19 @@ export class MapController {
       maxZoom: config.maxZoom,
       maxNativeZoom: config.maxNativeZoom,
     }).addTo(this.map);
-    this.layers.addTo(this.map);
-    this.measurements.addTo(this.map);
-    this.routes.addTo(this.map);
-    this.destinations.addTo(this.map);
-    this.draft.addTo(this.map);
-    this.map.on("click", (event) =>
+    [
+      this.layers,
+      this.measurements,
+      this.routes,
+      this.destinations,
+      this.draft,
+    ].forEach((layer) => layer.addTo(this.map));
+    this.map.on("click", (event: LeafletMouseEvent) =>
       this.mapClickHandler?.([event.latlng.lat, event.latlng.lng]),
     );
   }
-  render(data) {
+
+  render(data: Dataset): void {
     this.data = data;
     this.layers.clearLayers();
     this.hideMeasurements();
@@ -41,17 +58,20 @@ export class MapController {
         title: `${property.title}, ${property.status}`,
         keyboard: true,
       }).addTo(this.layers);
-      marker.on("click", (event) => {
+      marker.on("click", (event: LeafletMouseEvent) => {
         if (!this.mapClickHandler)
-          this.select(property, event.originalEvent?.target);
+          this.select(
+            property,
+            event.originalEvent?.target as HTMLElement | undefined,
+          );
       });
       this.markers.set(property.id, marker);
     });
   }
-  select(property, trigger) {
+
+  select(property: Property, trigger?: HTMLElement): void {
     this.clearSelection();
     this.selectedProperty = property;
-    this.lastTrigger = trigger;
     this.markers.get(property.id)?.setIcon(lotIcon(property, true));
     this.selectedPolygon = L.polygon(property.polygon, {
       color: "#4d8dff",
@@ -60,9 +80,15 @@ export class MapController {
       fillOpacity: 0.22,
     }).addTo(this.layers);
     const padding =
-      innerWidth > 700
-        ? { paddingTopLeft: [40, 40], paddingBottomRight: [510, 40] }
-        : { paddingTopLeft: [30, 30], paddingBottomRight: [30, 260] };
+      innerWidth > 900
+        ? {
+            paddingTopLeft: [40, 40] as L.PointTuple,
+            paddingBottomRight: [510, 40] as L.PointTuple,
+          }
+        : {
+            paddingTopLeft: [30, 30] as L.PointTuple,
+            paddingBottomRight: [30, 260] as L.PointTuple,
+          };
     this.map.fitBounds(this.selectedPolygon.getBounds(), {
       ...padding,
       maxZoom: 18,
@@ -70,11 +96,10 @@ export class MapController {
     });
     this.onPropertySelect(property, trigger);
   }
-  clearSelection() {
-    if (this.selectedPolygon) {
-      this.selectedPolygon.remove();
-      this.selectedPolygon = undefined;
-    }
+
+  clearSelection(): void {
+    this.selectedPolygon?.remove();
+    this.selectedPolygon = undefined;
     this.hideMeasurements();
     this.hideRoutes();
     if (this.selectedProperty)
@@ -83,21 +108,23 @@ export class MapController {
         ?.setIcon(lotIcon(this.selectedProperty));
     this.selectedProperty = undefined;
   }
-  showAll() {
+  showAll(): void {
     this.clearSelection();
     const coords = this.data.properties.map((item) => item.coordinates);
     if (coords.length)
       this.map.fitBounds(coords, { padding: [80, 80], maxZoom: config.zoom });
     else this.map.setView(config.center, config.zoom);
   }
-  setClickMode(handler, message) {
-    this.mapClickHandler = handler;
+  setClickMode(
+    handler: ((point: Coordinate) => void) | null,
+    message?: string,
+  ): void {
+    this.mapClickHandler = handler ?? undefined;
     this.map.getContainer().style.cursor = handler ? "crosshair" : "";
-    this.#hint(message);
+    this.hint(message);
   }
-  showDraft(points) {
+  showDraft(points: Coordinate[]): void {
     this.draft.clearLayers();
-    if (!points.length) return;
     points.forEach((point, index) =>
       L.circleMarker(point, {
         radius: 7,
@@ -120,11 +147,12 @@ export class MapController {
         dashArray: "7 6",
       }).addTo(this.draft);
   }
-  clearDraft() {
+  clearDraft(): void {
     this.draft.clearLayers();
     this.setClickMode(null);
   }
-  toggleRoutes(property) {
+
+  toggleRoutes(property: Property): boolean {
     if (this.routePropertyId === property.id) {
       this.hideRoutes();
       return false;
@@ -160,40 +188,43 @@ export class MapController {
     });
     return true;
   }
-  hideRoutes() {
+  hideRoutes(): void {
     this.routes.clearLayers();
     this.destinations.clearLayers();
     this.routePropertyId = undefined;
   }
-  toggleMeasurements(property) {
+  toggleMeasurements(property: Property): boolean {
     if (this.measurementPropertyId === property.id) {
       this.hideMeasurements();
       return false;
     }
     this.hideMeasurements();
-    this.#showPerimeter(property.polygon);
+    this.showPerimeter(property.polygon);
     this.measurementPropertyId = property.id;
     return true;
   }
-  hideMeasurements() {
+  hideMeasurements(): void {
     this.measurements.clearLayers();
     this.measurementPropertyId = undefined;
   }
-  #showPerimeter(points) {
-    if (!Array.isArray(points) || points.length < 3) return;
+
+  private showPerimeter(points: Coordinate[]): void {
+    if (points.length < 3 || !this.selectedPolygon) return;
     let total = 0;
     points.forEach((point, index) => {
       const next = points[(index + 1) % points.length];
       const distance = this.map.distance(point, next);
       total += distance;
-      const midpoint = [(point[0] + next[0]) / 2, (point[1] + next[1]) / 2];
+      const midpoint: Coordinate = [
+        (point[0] + next[0]) / 2,
+        (point[1] + next[1]) / 2,
+      ];
       L.marker(midpoint, {
         interactive: false,
         icon: measurementIcon(formatDistance(distance), "measurement-edge"),
       }).addTo(this.measurements);
     });
-    const center = this.selectedPolygon.getBounds().getCenter();
-    L.marker(center, {
+    L.marker(this.selectedPolygon.getBounds().getCenter(), {
       interactive: false,
       icon: measurementIcon(
         `Perimeter ${formatDistance(total)}`,
@@ -201,7 +232,7 @@ export class MapController {
       ),
     }).addTo(this.measurements);
   }
-  #hint(message) {
+  private hint(message?: string): void {
     document.querySelector(".map-pin-hint")?.remove();
     if (!message) return;
     const hint = document.createElement("div");
@@ -211,16 +242,23 @@ export class MapController {
   }
 }
 
-function lotIcon(property, selected = false) {
+function lotIcon(property: Property, selected = false): L.DivIcon {
+  const span = document.createElement("span");
+  span.textContent = property.title;
   return L.divIcon({
     className: `lot-label${selected ? " lot-label-selected" : ""}`,
-    html: `<span>${escapeHtml(property.title)}</span>`,
+    html: span.outerHTML,
     iconSize: [80, 30],
     iconAnchor: [40, 15],
   });
 }
-function destinationIcon(type) {
-  const icons = { school: "🏫", bank: "🏦", store: "🛒", landmark: "◆" };
+function destinationIcon(type: DestinationType): L.DivIcon {
+  const icons: Record<DestinationType, string> = {
+    school: "🏫",
+    bank: "🏦",
+    store: "🛒",
+    landmark: "◆",
+  };
   return L.divIcon({
     className: "destination-icon",
     html: icons[type] || "●",
@@ -228,24 +266,21 @@ function destinationIcon(type) {
     iconAnchor: [17, 17],
   });
 }
-function measurementIcon(label, variant) {
+function measurementIcon(label: string, variant: string): L.DivIcon {
+  const span = document.createElement("span");
+  span.textContent = label;
   return L.divIcon({
     className: `measurement-label ${variant}`,
-    html: `<span>${label}</span>`,
+    html: span.outerHTML,
     iconSize: [110, 28],
     iconAnchor: [55, 14],
   });
 }
-function formatDistance(meters) {
+function formatDistance(meters: number): string {
   return meters >= 1000
     ? `${(meters / 1000).toFixed(2)} km`
     : `${meters.toFixed(1)} m`;
 }
-function escapeHtml(value) {
-  const span = document.createElement("span");
-  span.textContent = value;
-  return span.innerHTML;
-}
-function reducedMotion() {
+function reducedMotion(): boolean {
   return matchMedia("(prefers-reduced-motion: reduce)").matches;
 }

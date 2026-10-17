@@ -27,7 +27,7 @@
       "area": "500 sqm", "price": 2500000, "measurements": "25m × 20m", "status": "Available",
       "description": "Fictional residential lot with sample road access, a level building area, and nearby reference destinations.",
       "utilities": {"Electricity":"Eastern Regional Electric","Water":"Municipal Water, Deepwell","Mobile":"CellOne, Sample Mobile","Internet":"FiberLink","Cable":"Community Cable"},
-      "media": {"panoramaUrl":"https://pannellum.org/images/alma.jpg","aerialVideoUrl":"https://www.youtube.com/watch?v=M7lc1UVf-VE","walkthroughVideoUrl":"https://www.youtube.com/watch?v=M7lc1UVf-VE"}
+      "media": {"panoramaUrl":"https://pannellum.org/images/alma.jpg","aerialVideoUrl":"https://www.youtube.com/watch?v=M7lc1UVf-VE","walkthroughVideoUrl":"https://www.youtube.com/watch?v=M7lc1UVf-VE","images":["/images/sample-property-exterior.png","/images/sample-property-living-room.png","/images/sample-property-kitchen.png"]}
     },
     {
       "id": "property-002", "title": "LOT 002", "address": "Sample Coastal Road", "coordinates": [6.9537, 126.217],
