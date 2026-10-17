@@ -1,6 +1,14 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  build: { sourcemap: true },
-  test: { environment: 'jsdom', include: ['tests/**/*.test.ts'] },
+  base: '/real-estate-map-explorer/',
+
+  build: {
+    sourcemap: true,
+  },
+
+  test: {
+    environment: 'jsdom',
+    include: ['tests/**/*.test.ts'],
+  },
 });

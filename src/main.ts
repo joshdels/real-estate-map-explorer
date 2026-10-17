@@ -1,4 +1,7 @@
 import "leaflet/dist/leaflet.css";
+import "../css/tokens.css";
+import "../css/components.css";
+import "../css/layout.css";
 import { AdminConsole } from "./admin";
 import { config } from "./config";
 import { DetailsPanel } from "./details";
