@@ -1,4 +1,5 @@
 import { AdminConsole } from "./admin";
+import { AuthController } from "./auth";
 import { DetailsPanel } from "./details";
 import { qs } from "./dom";
 import { MapController } from "./map-controller";
@@ -23,6 +24,8 @@ export function initializeApp(): Promise<void> {
 
 async function start(): Promise<void> {
   const repositoryResult = await createRepository();
+  const auth = new AuthController();
+  await auth.initialize();
   const store = new PropertyStore(repositoryResult.repository);
   await store.initialize();
   if (repositoryResult.message) console.info(repositoryResult.message);
@@ -46,10 +49,15 @@ async function start(): Promise<void> {
       (item) => media.open(item),
     );
   });
-  const admin = new AdminConsole(store, map, (data) => {
-    details.close();
-    map.render(data);
-  });
+  const admin = new AdminConsole(
+    store,
+    map,
+    (data) => {
+      details.close();
+      map.render(data);
+    },
+    () => auth.isAuthenticated(),
+  );
   details.onClose = () => map.clearSelection();
   map.render(store.snapshot());
   qs("#home-button").addEventListener("click", () => {

@@ -20,17 +20,36 @@ export async function createRepository(): Promise<RepositoryResult> {
     };
   try {
     const remote = new SupabaseRepository(client);
-    await remote.load();
+    await withTimeout(remote.load(), 6_000);
     return { repository: remote, usedFallback: false };
   } catch (error) {
     console.warn(
-      "Supabase could not be reached; using local sample data.",
+      "The configured Supabase dataset could not be loaded; using local sample data.",
       error,
     );
     return {
       repository: local,
       usedFallback: true,
-      message: "Supabase is unavailable; using local sample data.",
+      message: "The Supabase dataset is unavailable; using local sample data.",
     };
   }
+}
+
+function withTimeout<T>(operation: Promise<T>, milliseconds: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(
+      () => reject(new Error("Supabase connection timed out.")),
+      milliseconds,
+    );
+    operation.then(
+      (value) => {
+        window.clearTimeout(timeout);
+        resolve(value);
+      },
+      (error: unknown) => {
+        window.clearTimeout(timeout);
+        reject(error);
+      },
+    );
+  });
 }

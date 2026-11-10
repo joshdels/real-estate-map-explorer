@@ -1,21 +1,33 @@
-import L, { type LeafletMouseEvent } from "leaflet";
+import * as maplibregl from "maplibre-gl";
+import type {
+  GeoJSONSource,
+  LngLatBoundsLike,
+  MapMouseEvent,
+  StyleSpecification,
+} from "maplibre-gl";
+import type { Feature, FeatureCollection } from "geojson";
 import { config } from "./config";
 import type { Coordinate, Dataset, DestinationType, Property } from "./types";
 
+const SOURCE_IDS = {
+  selection: "property-selection",
+  routes: "property-routes",
+  draft: "boundary-draft",
+} as const;
+
+maplibregl.setWorkerUrl("/maplibre-gl-worker.mjs");
+
 export class MapController {
-  private readonly map: L.Map;
-  private readonly layers = L.layerGroup();
-  private readonly measurements = L.layerGroup();
-  private readonly routes = L.layerGroup();
-  private readonly destinations = L.layerGroup();
-  private readonly draft = L.layerGroup();
-  private readonly markers = new Map<string, L.Marker>();
+  private readonly map: maplibregl.Map;
+  private readonly markers = new Map<string, maplibregl.Marker>();
+  private readonly destinationMarkers: maplibregl.Marker[] = [];
+  private readonly measurementMarkers: maplibregl.Marker[] = [];
   private data!: Dataset;
   private selectedProperty?: Property;
-  private selectedPolygon?: L.Polygon;
   private mapClickHandler?: (point: Coordinate) => void;
   private routePropertyId?: string;
   private measurementPropertyId?: string;
+  private loaded = false;
 
   constructor(
     private readonly onPropertySelect: (
@@ -23,48 +35,56 @@ export class MapController {
       trigger?: HTMLElement,
     ) => void,
   ) {
-    this.map = L.map("map", {
-      zoomControl: true,
+    this.map = new maplibregl.Map({
+      container: "map",
+      style: satelliteStyle(),
+      center: toLngLat(config.center),
+      zoom: config.zoom,
       minZoom: 3,
       maxZoom: config.maxZoom,
-    }).setView(config.center, config.zoom);
-    this.map.attributionControl.setPrefix(false);
-    L.tileLayer(config.tileUrl, {
-      attribution: config.attribution,
-      maxZoom: config.maxZoom,
-      maxNativeZoom: config.maxNativeZoom,
-    }).addTo(this.map);
-    [
-      this.layers,
-      this.measurements,
-      this.routes,
-      this.destinations,
-      this.draft,
-    ].forEach((layer) => layer.addTo(this.map));
-    this.map.on("click", (event: LeafletMouseEvent) =>
-      this.mapClickHandler?.([event.latlng.lat, event.latlng.lng]),
+      attributionControl: false,
+    });
+    this.map.addControl(
+      new maplibregl.NavigationControl({ showCompass: false }),
+      "top-left",
+    );
+    this.map.addControl(
+      new maplibregl.AttributionControl({ compact: true }),
+      "bottom-right",
+    );
+    this.map.on("load", () => {
+      this.loaded = true;
+      this.addOverlaySources();
+      this.syncSelection();
+    });
+    this.map.on("click", (event: MapMouseEvent) =>
+      this.mapClickHandler?.([event.lngLat.lat, event.lngLat.lng]),
     );
   }
 
   render(data: Dataset): void {
     this.data = data;
-    this.layers.clearLayers();
+    this.clearPropertyMarkers();
     this.hideMeasurements();
     this.hideRoutes();
-    this.markers.clear();
     data.properties.forEach((property) => {
-      const marker = L.marker(property.coordinates, {
-        icon: lotIcon(property),
-        title: `${property.title}, ${property.status}`,
-        keyboard: true,
-      }).addTo(this.layers);
-      marker.on("click", (event: LeafletMouseEvent) => {
-        if (!this.mapClickHandler)
-          this.select(
-            property,
-            event.originalEvent?.target as HTMLElement | undefined,
-          );
+      const element = lotMarker(property);
+      const select = () => {
+        if (!this.mapClickHandler) this.select(property, element);
+      };
+      element.addEventListener("click", (event) => {
+        event.stopPropagation();
+        select();
       });
+      element.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          select();
+        }
+      });
+      const marker = new maplibregl.Marker({ element, anchor: "center" })
+        .setLngLat(toLngLat(property.coordinates))
+        .addTo(this.map);
       this.markers.set(property.id, marker);
     });
   }
@@ -72,83 +92,79 @@ export class MapController {
   select(property: Property, trigger?: HTMLElement): void {
     this.clearSelection();
     this.selectedProperty = property;
-    this.markers.get(property.id)?.setIcon(lotIcon(property, true));
-    this.selectedPolygon = L.polygon(property.polygon, {
-      color: "#4d8dff",
-      weight: 3,
-      fillColor: "#629aff",
-      fillOpacity: 0.22,
-    }).addTo(this.layers);
-    const padding =
-      innerWidth > 900
-        ? {
-            paddingTopLeft: [40, 40] as L.PointTuple,
-            paddingBottomRight: [510, 40] as L.PointTuple,
-          }
-        : {
-            paddingTopLeft: [30, 30] as L.PointTuple,
-            paddingBottomRight: [30, 260] as L.PointTuple,
-          };
-    this.map.fitBounds(this.selectedPolygon.getBounds(), {
-      ...padding,
+    this.markers
+      .get(property.id)
+      ?.getElement()
+      .classList.add("lot-label-selected");
+    this.syncSelection();
+    this.map.fitBounds(coordinateBounds(property.polygon), {
+      padding:
+        innerWidth > 900
+          ? { top: 40, right: 510, bottom: 40, left: 40 }
+          : { top: 30, right: 30, bottom: 260, left: 30 },
       maxZoom: 18,
-      animate: !reducedMotion(),
+      duration: reducedMotion() ? 0 : 700,
     });
     this.onPropertySelect(property, trigger);
   }
 
   clearSelection(): void {
-    this.selectedPolygon?.remove();
-    this.selectedPolygon = undefined;
     this.hideMeasurements();
     this.hideRoutes();
     if (this.selectedProperty)
       this.markers
         .get(this.selectedProperty.id)
-        ?.setIcon(lotIcon(this.selectedProperty));
+        ?.getElement()
+        .classList.remove("lot-label-selected");
     this.selectedProperty = undefined;
+    this.setSourceData(SOURCE_IDS.selection, featureCollection([]));
   }
+
   showAll(): void {
     this.clearSelection();
     const coords = this.data.properties.map((item) => item.coordinates);
     if (coords.length)
-      this.map.fitBounds(coords, { padding: [80, 80], maxZoom: config.zoom });
-    else this.map.setView(config.center, config.zoom);
+      this.map.fitBounds(coordinateBounds(coords), {
+        padding: 80,
+        maxZoom: config.zoom,
+        duration: reducedMotion() ? 0 : 700,
+      });
+    else
+      this.map.easeTo({
+        center: toLngLat(config.center),
+        zoom: config.zoom,
+        duration: reducedMotion() ? 0 : 700,
+      });
   }
+
   setClickMode(
     handler: ((point: Coordinate) => void) | null,
     message?: string,
   ): void {
     this.mapClickHandler = handler ?? undefined;
-    this.map.getContainer().style.cursor = handler ? "crosshair" : "";
+    this.map.getCanvas().style.cursor = handler ? "crosshair" : "";
     this.hint(message);
   }
+
   showDraft(points: Coordinate[]): void {
-    this.draft.clearLayers();
-    points.forEach((point, index) =>
-      L.circleMarker(point, {
-        radius: 7,
-        color: "#fff",
-        weight: 2,
-        fillColor: "#5286e6",
-        fillOpacity: 1,
-      })
-        .bindTooltip(String(index + 1), {
-          permanent: true,
-          direction: "center",
-          className: "point-number",
-        })
-        .addTo(this.draft),
-    );
-    if (points.length > 1)
-      L.polyline([...points, ...(points.length > 2 ? [points[0]] : [])], {
-        color: "#5286e6",
-        weight: 3,
-        dashArray: "7 6",
-      }).addTo(this.draft);
+    const features: Feature[] = points.map((point, index) => ({
+      type: "Feature",
+      properties: { label: String(index + 1) },
+      geometry: { type: "Point", coordinates: toLngLat(point) },
+    }));
+    if (points.length > 1) {
+      const line = [...points, ...(points.length > 2 ? [points[0]] : [])];
+      features.push({
+        type: "Feature",
+        properties: {},
+        geometry: { type: "LineString", coordinates: line.map(toLngLat) },
+      });
+    }
+    this.setSourceData(SOURCE_IDS.draft, featureCollection(features));
   }
+
   clearDraft(): void {
-    this.draft.clearLayers();
+    this.setSourceData(SOURCE_IDS.draft, featureCollection([]));
     this.setClickMode(null);
   }
 
@@ -158,7 +174,8 @@ export class MapController {
       return false;
     }
     this.hideRoutes();
-    const bounds = L.latLngBounds([property.coordinates]);
+    const features: Feature[] = [];
+    const points = [property.coordinates];
     this.data.routes
       .filter((route) => route.propertyId === property.id)
       .forEach((route) => {
@@ -166,33 +183,44 @@ export class MapController {
           (item) => item.id === route.destinationId,
         );
         if (!destination) return;
-        L.marker(destination.coordinates, {
-          icon: destinationIcon(destination.type),
-          title: destination.name,
-        })
-          .bindTooltip(destination.name)
-          .addTo(this.destinations);
-        L.polyline([property.coordinates, destination.coordinates], {
-          color: "#0ca6d8",
-          weight: 4,
-          dashArray: "8 7",
-        }).addTo(this.routes);
-        bounds.extend(destination.coordinates);
+        const element = destinationMarker(destination.type, destination.name);
+        this.destinationMarkers.push(
+          new maplibregl.Marker({ element, anchor: "center" })
+            .setLngLat(toLngLat(destination.coordinates))
+            .setPopup(
+              new maplibregl.Popup({ offset: 22 }).setText(destination.name),
+            )
+            .addTo(this.map),
+        );
+        features.push({
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "LineString",
+            coordinates: [property.coordinates, destination.coordinates].map(
+              toLngLat,
+            ),
+          },
+        });
+        points.push(destination.coordinates);
       });
-    if (!this.routes.getLayers().length) return false;
+    if (!features.length) return false;
+    this.setSourceData(SOURCE_IDS.routes, featureCollection(features));
     this.routePropertyId = property.id;
-    this.map.fitBounds(bounds, {
-      padding: [80, 80],
+    this.map.fitBounds(coordinateBounds(points), {
+      padding: 80,
       maxZoom: 16,
-      animate: !reducedMotion(),
+      duration: reducedMotion() ? 0 : 700,
     });
     return true;
   }
+
   hideRoutes(): void {
-    this.routes.clearLayers();
-    this.destinations.clearLayers();
+    this.destinationMarkers.splice(0).forEach((marker) => marker.remove());
+    this.setSourceData(SOURCE_IDS.routes, featureCollection([]));
     this.routePropertyId = undefined;
   }
+
   toggleMeasurements(property: Property): boolean {
     if (this.measurementPropertyId === property.id) {
       this.hideMeasurements();
@@ -203,35 +231,122 @@ export class MapController {
     this.measurementPropertyId = property.id;
     return true;
   }
+
   hideMeasurements(): void {
-    this.measurements.clearLayers();
+    this.measurementMarkers.splice(0).forEach((marker) => marker.remove());
     this.measurementPropertyId = undefined;
   }
 
+  private addOverlaySources(): void {
+    this.map.addSource(SOURCE_IDS.selection, geoJsonSource());
+    this.map.addLayer({
+      id: "property-selection-fill",
+      type: "fill",
+      source: SOURCE_IDS.selection,
+      paint: { "fill-color": "#629aff", "fill-opacity": 0.22 },
+    });
+    this.map.addLayer({
+      id: "property-selection-line",
+      type: "line",
+      source: SOURCE_IDS.selection,
+      paint: { "line-color": "#4d8dff", "line-width": 3 },
+    });
+    this.map.addSource(SOURCE_IDS.routes, geoJsonSource());
+    this.map.addLayer({
+      id: "property-routes-line",
+      type: "line",
+      source: SOURCE_IDS.routes,
+      paint: {
+        "line-color": "#0ca6d8",
+        "line-width": 4,
+        "line-dasharray": [2, 1.75],
+      },
+    });
+    this.map.addSource(SOURCE_IDS.draft, geoJsonSource());
+    this.map.addLayer({
+      id: "boundary-draft-line",
+      type: "line",
+      source: SOURCE_IDS.draft,
+      paint: {
+        "line-color": "#5286e6",
+        "line-width": 3,
+        "line-dasharray": [2.3, 2],
+      },
+      filter: ["==", ["geometry-type"], "LineString"],
+    });
+    this.map.addLayer({
+      id: "boundary-draft-points",
+      type: "circle",
+      source: SOURCE_IDS.draft,
+      paint: {
+        "circle-radius": 7,
+        "circle-color": "#5286e6",
+        "circle-stroke-color": "#ffffff",
+        "circle-stroke-width": 2,
+      },
+      filter: ["==", ["geometry-type"], "Point"],
+    });
+  }
+
+  private syncSelection(): void {
+    const polygon = this.selectedProperty?.polygon;
+    this.setSourceData(
+      SOURCE_IDS.selection,
+      polygon
+        ? featureCollection([
+            {
+              type: "Feature",
+              properties: {},
+              geometry: {
+                type: "Polygon",
+                coordinates: [[...polygon, polygon[0]].map(toLngLat)],
+              },
+            },
+          ])
+        : featureCollection([]),
+    );
+  }
+
+  private setSourceData(id: string, data: FeatureCollection): void {
+    if (!this.loaded) return;
+    (this.map.getSource(id) as GeoJSONSource | undefined)?.setData(data);
+  }
+
+  private clearPropertyMarkers(): void {
+    this.markers.forEach((marker) => marker.remove());
+    this.markers.clear();
+  }
+
   private showPerimeter(points: Coordinate[]): void {
-    if (points.length < 3 || !this.selectedPolygon) return;
+    if (points.length < 3 || !this.selectedProperty) return;
     let total = 0;
     points.forEach((point, index) => {
       const next = points[(index + 1) % points.length];
-      const distance = this.map.distance(point, next);
+      const distance = geodesicDistance(point, next);
       total += distance;
       const midpoint: Coordinate = [
         (point[0] + next[0]) / 2,
         (point[1] + next[1]) / 2,
       ];
-      L.marker(midpoint, {
-        interactive: false,
-        icon: measurementIcon(formatDistance(distance), "measurement-edge"),
-      }).addTo(this.measurements);
+      this.measurementMarkers.push(
+        labelMarker(
+          midpoint,
+          formatDistance(distance),
+          "measurement-edge",
+          this.map,
+        ),
+      );
     });
-    L.marker(this.selectedPolygon.getBounds().getCenter(), {
-      interactive: false,
-      icon: measurementIcon(
+    this.measurementMarkers.push(
+      labelMarker(
+        boundsCenter(points),
         `Perimeter ${formatDistance(total)}`,
         "measurement-total",
+        this.map,
       ),
-    }).addTo(this.measurements);
+    );
   }
+
   private hint(message?: string): void {
     document.querySelector(".map-pin-hint")?.remove();
     if (!message) return;
@@ -242,45 +357,115 @@ export class MapController {
   }
 }
 
-function lotIcon(property: Property, selected = false): L.DivIcon {
+function satelliteStyle(): StyleSpecification {
+  return {
+    version: 8,
+    sources: {
+      satellite: {
+        type: "raster",
+        tiles: [config.tileUrl],
+        tileSize: 256,
+        attribution: config.attribution,
+        maxzoom: config.maxNativeZoom,
+      },
+    },
+    layers: [{ id: "satellite", type: "raster", source: "satellite" }],
+  };
+}
+
+function geoJsonSource(): maplibregl.GeoJSONSourceSpecification {
+  return { type: "geojson", data: featureCollection([]) };
+}
+
+function featureCollection(
+  features: Feature[],
+): FeatureCollection {
+  return { type: "FeatureCollection", features };
+}
+
+function lotMarker(property: Property): HTMLButtonElement {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "lot-label";
+  button.title = `${property.title}, ${property.status}`;
+  button.setAttribute("aria-label", `View ${property.title}, ${property.status}`);
   const span = document.createElement("span");
   span.textContent = property.title;
-  return L.divIcon({
-    className: `lot-label${selected ? " lot-label-selected" : ""}`,
-    html: span.outerHTML,
-    iconSize: [80, 30],
-    iconAnchor: [40, 15],
-  });
+  button.append(span);
+  return button;
 }
-function destinationIcon(type: DestinationType): L.DivIcon {
+
+function destinationMarker(type: DestinationType, name: string): HTMLElement {
   const icons: Record<DestinationType, string> = {
     school: "🏫",
     bank: "🏦",
     store: "🛒",
     landmark: "◆",
   };
-  return L.divIcon({
-    className: "destination-icon",
-    html: icons[type] || "●",
-    iconSize: [34, 34],
-    iconAnchor: [17, 17],
-  });
+  const element = document.createElement("div");
+  element.className = "destination-icon";
+  element.textContent = icons[type] || "●";
+  element.title = name;
+  element.setAttribute("aria-label", name);
+  return element;
 }
-function measurementIcon(label: string, variant: string): L.DivIcon {
+
+function labelMarker(
+  point: Coordinate,
+  label: string,
+  variant: string,
+  map: maplibregl.Map,
+): maplibregl.Marker {
+  const element = document.createElement("div");
+  element.className = `measurement-label ${variant}`;
   const span = document.createElement("span");
   span.textContent = label;
-  return L.divIcon({
-    className: `measurement-label ${variant}`,
-    html: span.outerHTML,
-    iconSize: [110, 28],
-    iconAnchor: [55, 14],
-  });
+  element.append(span);
+  return new maplibregl.Marker({ element, anchor: "center" })
+    .setLngLat(toLngLat(point))
+    .addTo(map);
 }
+
+function toLngLat(point: Coordinate): [number, number] {
+  return [point[1], point[0]];
+}
+
+function coordinateBounds(points: Coordinate[]): LngLatBoundsLike {
+  const bounds = new maplibregl.LngLatBounds();
+  points.forEach((point) => bounds.extend(toLngLat(point)));
+  return bounds;
+}
+
+function boundsCenter(points: Coordinate[]): Coordinate {
+  const latitudes = points.map(([latitude]) => latitude);
+  const longitudes = points.map(([, longitude]) => longitude);
+  return [
+    (Math.min(...latitudes) + Math.max(...latitudes)) / 2,
+    (Math.min(...longitudes) + Math.max(...longitudes)) / 2,
+  ];
+}
+
+function geodesicDistance(a: Coordinate, b: Coordinate): number {
+  const radians = (degrees: number) => (degrees * Math.PI) / 180;
+  const earthRadius = 6_371_008.8;
+  const latitudeDelta = radians(b[0] - a[0]);
+  const longitudeDelta = radians(b[1] - a[1]);
+  const latitudeA = radians(a[0]);
+  const latitudeB = radians(b[0]);
+  const value =
+    Math.sin(latitudeDelta / 2) ** 2 +
+    Math.cos(latitudeA) *
+      Math.cos(latitudeB) *
+      Math.sin(longitudeDelta / 2) ** 2;
+  return earthRadius * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+}
+
 function formatDistance(meters: number): string {
   return meters >= 1000
     ? `${(meters / 1000).toFixed(2)} km`
     : `${meters.toFixed(1)} m`;
 }
+
 function reducedMotion(): boolean {
   return matchMedia("(prefers-reduced-motion: reduce)").matches;
 }

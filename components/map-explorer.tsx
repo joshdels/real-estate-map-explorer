@@ -120,7 +120,11 @@ export function MapExplorer() {
     <div id="admin-dialog" className="dialog-backdrop" hidden>
       <section className="dialog" role="dialog" aria-modal="true" aria-labelledby="admin-access-title">
         <button id="cancel-admin" className="dialog-close" type="button" aria-label="Cancel admin access">×</button><span className="dialog-icon" aria-hidden="true">🔐</span>
-        <h2 id="admin-access-title">Admin access</h2><p>Enter the local access passcode: <strong>admin</strong>.</p>
+        <h2 id="admin-access-title">Admin access</h2>
+        <p id="auth-status" className="auth-status">Sign in with an authorized Google account for shared data, or use the local passcode for this browser only.</p>
+        <button id="google-sign-in" className="google-auth-button" type="button"><span aria-hidden="true">G</span> Continue with Google</button>
+        <button id="google-sign-out" className="outline-button" type="button" hidden>Sign out</button>
+        <div className="auth-divider"><span>or local access</span></div>
         <form id="admin-access-form"><input name="username" type="text" value="local-admin" autoComplete="username" readOnly hidden /><label className="dialog-label">Passcode<input id="admin-passcode" type="password" required autoComplete="current-password" /></label><p id="admin-access-error" className="form-error" role="alert"></p><button className="primary-button" type="submit">Access admin panel</button></form>
       </section>
     </div>

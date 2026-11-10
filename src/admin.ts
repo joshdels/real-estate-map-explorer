@@ -20,6 +20,7 @@ export class AdminConsole {
     private readonly store: PropertyStore,
     private readonly map: MapController,
     private readonly onDataChange: (data: Dataset) => void,
+    private readonly isAuthenticated: () => boolean = () => false,
   ) {
     this.bindAccess();
     this.bindTabs();
@@ -27,6 +28,10 @@ export class AdminConsole {
     this.refresh();
   }
   requestAccess(): void {
+    if (this.isAuthenticated()) {
+      this.openPanel();
+      return;
+    }
     this.dialog.hidden = false;
     qs<HTMLInputElement>("#admin-passcode").focus();
   }
@@ -63,10 +68,13 @@ export class AdminConsole {
         input.value = "";
         qs("#admin-access-error").textContent = "";
         this.closeDialog();
-        this.panel.classList.add("is-open");
-        this.panel.setAttribute("aria-hidden", "false");
+        this.openPanel();
       },
     );
+  }
+  private openPanel(): void {
+    this.panel.classList.add("is-open");
+    this.panel.setAttribute("aria-hidden", "false");
   }
   private bindTabs(): void {
     document
