@@ -1,6 +1,6 @@
 import type { DataRepository, Dataset } from "../types";
 import { validateDataset } from "../validation";
-import seedData from "../../data/data.json";
+import seedData from "../../public/data/data.json";
 
 const STORAGE_KEY = "real-estate-map-explorer.data.v6";
 
@@ -14,7 +14,7 @@ export class LocalRepository implements DataRepository {
     try {
       return validateDataset(JSON.parse(saved));
     } catch (error) {
-      console.warn("Saved data was invalid; using data/data.json.", error);
+      console.warn("Saved data was invalid; using the bundled seed dataset.", error);
       return seed;
     }
   }

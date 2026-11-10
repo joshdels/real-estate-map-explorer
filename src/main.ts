@@ -1,9 +1,4 @@
-import "leaflet/dist/leaflet.css";
-import "../css/tokens.css";
-import "../css/components.css";
-import "../css/layout.css";
 import { AdminConsole } from "./admin";
-import { config } from "./config";
 import { DetailsPanel } from "./details";
 import { qs } from "./dom";
 import { MapController } from "./map-controller";
@@ -12,14 +7,19 @@ import { createRepository } from "./repositories/factory";
 import { PropertyStore } from "./store";
 import type { Agent } from "./types";
 
-document.title = config.title;
-const status = qs<HTMLElement>("#app-status");
-start().catch((error: unknown) => {
-  console.error(error);
-  status.hidden = false;
-  status.textContent =
-    "The application could not start. Check the console and the validated fallback dataset.";
-});
+let initialization: Promise<void> | undefined;
+
+export function initializeApp(): Promise<void> {
+  initialization ??= start().catch((error: unknown) => {
+    console.error(error);
+    const status = qs<HTMLElement>("#app-status");
+    status.hidden = false;
+    status.textContent =
+      "The application could not start. Check the console and the validated fallback dataset.";
+    throw error;
+  });
+  return initialization;
+}
 
 async function start(): Promise<void> {
   const repositoryResult = await createRepository();

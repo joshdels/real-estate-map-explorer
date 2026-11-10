@@ -1,0 +1,39 @@
+import type { Metadata, Viewport } from "next";
+import Script from "next/script";
+import "leaflet/dist/leaflet.css";
+import "@/css/tokens.css";
+import "@/css/components.css";
+import "@/css/layout.css";
+
+export const metadata: Metadata = {
+  title: "Real Estate Map Explorer",
+  description:
+    "Explore clearly labeled sample real-estate listings on an interactive satellite map.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#12322d",
+};
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <html lang="en-PH">
+      <head>
+        <link rel="preconnect" href="https://server.arcgisonline.com" />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.css"
+        />
+      </head>
+      <body>
+        {children}
+        <Script
+          src="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.js"
+          strategy="beforeInteractive"
+        />
+      </body>
+    </html>
+  );
+}

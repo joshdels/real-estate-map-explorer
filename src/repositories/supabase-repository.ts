@@ -1,13 +1,14 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database, Json } from "../lib/supabase/database.types";
 import type { DataRepository, Dataset } from "../types";
 import { validateDataset } from "../validation";
 
 export class SupabaseRepository implements DataRepository {
   readonly source = "supabase" as const;
-  private readonly client: SupabaseClient;
+  private readonly client: SupabaseClient<Database>;
 
-  constructor(url: string, anonKey: string) {
-    this.client = createClient(url, anonKey);
+  constructor(client: SupabaseClient<Database>) {
+    this.client = client;
   }
 
   async load(): Promise<Dataset> {
@@ -26,7 +27,7 @@ export class SupabaseRepository implements DataRepository {
       .upsert(
         {
           slug: "default",
-          payload: validateDataset(dataset),
+          payload: validateDataset(dataset) as unknown as Json,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "slug" },

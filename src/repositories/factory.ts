@@ -1,4 +1,5 @@
 import type { DataRepository } from "../types";
+import { createSupabaseBrowserClient } from "../lib/supabase/client";
 import { LocalRepository } from "./local-repository";
 import { SupabaseRepository } from "./supabase-repository";
 
@@ -10,16 +11,15 @@ export interface RepositoryResult {
 
 export async function createRepository(): Promise<RepositoryResult> {
   const local = new LocalRepository();
-  const url = import.meta.env.VITE_SUPABASE_URL?.trim();
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
-  if (!url || !key)
+  const client = createSupabaseBrowserClient();
+  if (!client)
     return {
       repository: local,
       usedFallback: true,
       message: "Supabase is not configured; using local sample data.",
     };
   try {
-    const remote = new SupabaseRepository(url, key);
+    const remote = new SupabaseRepository(client);
     await remote.load();
     return { repository: remote, usedFallback: false };
   } catch (error) {
