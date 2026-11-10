@@ -1,0 +1,3 @@
+-- Seed intentionally left empty. Import public/data/data.json as the payload of
+-- the `default` app_datasets row from a trusted dashboard or server-side script.
+-- Bundled data is fictional and must never be presented as verified inventory.

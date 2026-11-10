@@ -71,12 +71,13 @@ export class MediaViewer {
     this.backdrop.hidden = false;
     if (request.type === "gallery")
       this.openGallery(request.urls ?? [], request.title);
-    else if (request.url && validMediaUrl(request.url))
-      request.type === "panorama"
-        ? this.openPanorama(request.url)
-        : this.stage.replaceChildren(
-            this.content(request.url, request.type, request.title),
-          );
+    else if (request.url && validMediaUrl(request.url)) {
+      if (request.type === "panorama") this.openPanorama(request.url);
+      else
+        this.stage.replaceChildren(
+          this.content(request.url, request.type, request.title),
+        );
+    }
     qs<HTMLButtonElement>("#close-media").focus();
   }
 

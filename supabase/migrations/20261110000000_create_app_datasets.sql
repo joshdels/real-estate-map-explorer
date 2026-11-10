@@ -1,4 +1,5 @@
--- Run in the Supabase SQL editor. Never expose a service-role key in Vite.
+-- Run in the Supabase SQL editor. Never expose a service-role key through a
+-- NEXT_PUBLIC_* environment variable.
 create table if not exists public.app_datasets (
   slug text primary key,
   payload jsonb not null,
@@ -23,5 +24,5 @@ to authenticated
 using (slug = 'default')
 with check (slug = 'default');
 
--- Seed the `default` row from data/data.json through the dashboard or a trusted
+-- Seed the `default` row from public/data/data.json through the dashboard or a trusted
 -- server-side migration. Do not weaken write policies for the browser passcode.

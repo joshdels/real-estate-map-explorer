@@ -1,42 +1,145 @@
 html,
-body,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+body {
+  background: #f4f5fc;
+}
+/* Only the interactive map shell locks the viewport; other routes
+   (e.g. the property detail page) scroll normally. */
+html:has(.app-shell),
+body:has(.app-shell) {
+  height: 100dvh;
+  min-height: 100dvh;
+}
+body:has(.app-shell) {
+  overflow: hidden;
+}
 .app-shell,
 .map {
   width: 100%;
   height: 100%;
   min-height: 100%;
 }
-html,
-body,
-.app-shell {
-  height: 100dvh;
-  min-height: 100dvh;
-}
-body {
-  overflow: hidden;
-  background: #12322d;
-}
 .app-shell {
   position: relative;
+  height: 100dvh;
+  min-height: 100dvh;
   isolation: isolate;
 }
 .map {
   position: absolute;
   z-index: 0;
-  inset: 0;
-  background: #173a36;
+  top: 72px;
+  right: 430px;
+  bottom: 0;
+  left: 0;
+  background: #1f2547;
+}
+.site-header {
+  position: fixed;
+  z-index: 750;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 72px;
+}
+.listing-panel {
+  position: fixed;
+  z-index: 400;
+  top: 72px;
+  right: 0;
+  bottom: 0;
+  width: 430px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .map-actions {
   position: absolute;
   z-index: 500;
-  top: max(18px, env(safe-area-inset-top));
-  right: max(22px, env(safe-area-inset-right));
+  top: calc(72px + 70px + max(18px, env(safe-area-inset-top)));
+  left: max(22px, env(safe-area-inset-left));
 }
 .agent-card {
   position: absolute;
   z-index: 500;
-  right: max(22px, env(safe-area-inset-right));
+  left: max(22px, env(safe-area-inset-left));
   bottom: max(22px, env(safe-area-inset-bottom));
+}
+.mobile-view-switcher {
+  display: none;
+}
+@media (min-width: 901px) {
+  body:not(.show-map-view) .map,
+  body:not(.show-map-view) .map-actions,
+  body:not(.show-map-view) .agent-card {
+    display: none;
+  }
+  body:not(.show-map-view) .listing-panel {
+    left: 0;
+    right: 0;
+    width: auto;
+    border-right: 0;
+    background: #f4f5fc;
+    box-shadow: none;
+  }
+  body:not(.show-map-view) .portal-intro {
+    max-width: 1120px;
+    margin: 24px auto 0;
+    border-radius: 20px;
+  }
+  body:not(.show-map-view) .listing-search {
+    max-width: 1120px;
+    margin-inline: auto;
+    padding-inline: 20px;
+  }
+  body:not(.show-map-view) .property-list {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    align-items: start;
+  }
+  body:not(.show-map-view) .property-card-button {
+    grid-template-columns: 1fr;
+  }
+  body:not(.show-map-view) .property-card-media {
+    min-height: 168px;
+  }
+  body.show-map-view .portal-intro {
+    display: none;
+  }
+  body.show-map-view .property-list {
+    gap: 0;
+  }
+  body.show-map-view .property-card {
+    border: 0;
+    border-bottom: 1px solid #e5e8f6;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  body.show-map-view .property-card:hover,
+  body.show-map-view .property-card.is-selected {
+    transform: none;
+    background: #eef0fe;
+    box-shadow: none;
+  }
+  body.show-map-view .property-card-button {
+    grid-template-columns: 84px minmax(0, 1fr);
+    gap: 10px;
+    padding: 9px 4px;
+  }
+  body.show-map-view .property-card-media {
+    min-height: 64px;
+    border-radius: 9px;
+  }
+  body.show-map-view .property-card-content {
+    padding: 2px 0;
+  }
+  body.show-map-view .property-card-facts,
+  body.show-map-view .property-card-action {
+    display: none;
+  }
 }
 .details-panel {
   position: fixed;
@@ -71,8 +174,42 @@ body {
   transform: translateX(0);
 }
 @media (max-width: 900px) {
+  .site-header {
+    height: 64px;
+  }
+  .listing-panel {
+    z-index: 350;
+    top: 64px;
+    width: 100%;
+    padding-bottom: 82px;
+    transition: transform 0.22s ease;
+  }
+  .map {
+    top: 64px;
+    left: 0;
+  }
+  body.show-map-view .listing-panel {
+    transform: translateX(-104%);
+    visibility: hidden;
+  }
+  .mobile-view-switcher {
+    position: fixed;
+    z-index: 620;
+    right: 50%;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 180px;
+    padding: 4px;
+    transform: translateX(50%);
+    border: 1px solid #dce4df;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 10px 32px #10261e38;
+  }
   .map-actions {
-    top: max(12px, env(safe-area-inset-top));
+    top: calc(64px + 62px + max(12px, env(safe-area-inset-top)));
+    left: auto;
     right: max(12px, env(safe-area-inset-right));
     gap: 7px;
   }
@@ -86,6 +223,10 @@ body {
     bottom: max(12px, env(safe-area-inset-bottom));
     width: 230px;
     padding: 12px;
+  }
+  body:not(.show-map-view) .map-actions,
+  body:not(.show-map-view) .agent-card {
+    visibility: hidden;
   }
   .agent-heading {
     margin-bottom: 10px;

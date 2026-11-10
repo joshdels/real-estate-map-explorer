@@ -20,6 +20,7 @@ export class AdminConsole {
     private readonly store: PropertyStore,
     private readonly map: MapController,
     private readonly onDataChange: (data: Dataset) => void,
+    private readonly isAuthenticated: () => boolean = () => false,
   ) {
     this.bindAccess();
     this.bindTabs();
@@ -27,6 +28,10 @@ export class AdminConsole {
     this.refresh();
   }
   requestAccess(): void {
+    if (this.isAuthenticated()) {
+      this.openPanel();
+      return;
+    }
     this.dialog.hidden = false;
     qs<HTMLInputElement>("#admin-passcode").focus();
   }
@@ -42,12 +47,40 @@ export class AdminConsole {
     this.renderProperties(data);
     this.renderDestinations(data);
     this.renderRoutes(data);
+    this.renderReports(data);
     this.fillSelects(data);
     this.fillUtilities(data.utilities);
   }
+  private renderReports(data: Dataset): void {
+    const reports = this.store.listReports();
+    const feed = qs<HTMLElement>("#report-feed");
+    if (reports.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "form-help";
+      empty.textContent = "No reported listings. Flags raised by visitors will appear here for review.";
+      feed.replaceChildren(empty);
+      return;
+    }
+    feed.replaceChildren(
+      ...reports.map((report) => {
+        const property = data.properties.find((item) => item.id === report.propertyId);
+        const label = report.title || property?.title || report.propertyId;
+        const status = property ? property.status : "Listing removed";
+        const when = new Date(report.createdAt).toLocaleString("en-PH");
+        return feedItem(
+          `${label} — ${report.reason}`,
+          `${status} · reported ${when}`,
+          async () => {
+            await this.store.resolveReport(report.id);
+            this.renderReports(this.store.snapshot());
+          },
+          "Mark reviewed",
+        );
+      }),
+    );
+  }
 
   private bindAccess(): void {
-    qs("#admin-button").addEventListener("click", () => this.requestAccess());
     qs("#cancel-admin").addEventListener("click", () => this.closeDialog());
     qs("#close-admin").addEventListener("click", () => this.close());
     qs<HTMLFormElement>("#admin-access-form").addEventListener(
@@ -63,10 +96,14 @@ export class AdminConsole {
         input.value = "";
         qs("#admin-access-error").textContent = "";
         this.closeDialog();
-        this.panel.classList.add("is-open");
-        this.panel.setAttribute("aria-hidden", "false");
+        this.openPanel();
       },
     );
+  }
+  private openPanel(): void {
+    this.panel.classList.add("is-open");
+    this.panel.setAttribute("aria-hidden", "false");
+    this.renderReports(this.store.snapshot());
   }
   private bindTabs(): void {
     document
@@ -275,7 +312,6 @@ export class AdminConsole {
   }
   private closeDialog(): void {
     this.dialog.hidden = true;
-    qs<HTMLButtonElement>("#admin-button").focus();
   }
   private stopPinning(): void {
     const button = qs<HTMLButtonElement>("#pin-boundary");
@@ -314,6 +350,7 @@ function feedItem(
   title: string,
   detail: string,
   onDelete: () => void | Promise<void>,
+  actionLabel = "Remove",
 ): HTMLElement {
   const item = document.createElement("article");
   item.className = "feed-item";
@@ -323,7 +360,7 @@ function feedItem(
   small.textContent = detail;
   const button = document.createElement("button");
   button.type = "button";
-  button.textContent = "Remove";
+  button.textContent = actionLabel;
   button.addEventListener("click", () => void onDelete());
   item.append(strong, small, button);
   return item;
