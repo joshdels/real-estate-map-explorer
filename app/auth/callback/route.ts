@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   const destination = new URL("/", requestUrl.origin);
   destination.searchParams.set(
     "auth_error",
-    "Google sign-in could not be completed. Check the Supabase provider and redirect settings.",
+    "Social sign-in could not be completed. Check the Supabase provider and redirect settings.",
   );
   return NextResponse.redirect(destination);
 }

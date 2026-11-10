@@ -1,4 +1,5 @@
 import type { User } from "@supabase/supabase-js";
+import type { Provider } from "@supabase/supabase-js";
 import { qs } from "./dom";
 import { createSupabaseBrowserClient } from "./lib/supabase/client";
 
@@ -7,9 +8,15 @@ export class AuthController {
   private user: User | null = null;
 
   async initialize(): Promise<void> {
-    const signIn = qs<HTMLButtonElement>("#google-sign-in");
+    const googleSignIn = qs<HTMLButtonElement>("#google-sign-in");
+    const facebookSignIn = qs<HTMLButtonElement>("#facebook-sign-in");
     const signOut = qs<HTMLButtonElement>("#google-sign-out");
-    signIn.addEventListener("click", () => void this.signIn());
+    googleSignIn.addEventListener("click", () =>
+      void this.signIn("google", "Google"),
+    );
+    facebookSignIn.addEventListener("click", () =>
+      void this.signIn("facebook", "Facebook"),
+    );
     signOut.addEventListener("click", () => void this.signOut());
 
     const error = new URLSearchParams(window.location.search).get("auth_error");
@@ -34,15 +41,15 @@ export class AuthController {
     return Boolean(this.user);
   }
 
-  private async signIn(): Promise<void> {
+  private async signIn(provider: Provider, label: string): Promise<void> {
     if (!this.client) {
       qs("#auth-status").textContent =
-        "Supabase must be configured before Google sign-in can be used.";
+        `Supabase must be configured before ${label} sign-in can be used.`;
       return;
     }
-    qs("#auth-status").textContent = "Opening Google sign-in…";
+    qs("#auth-status").textContent = `Opening ${label} sign-in…`;
     const { error } = await this.client.auth.signInWithOAuth({
-      provider: "google",
+      provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=/`,
       },
@@ -58,12 +65,14 @@ export class AuthController {
   }
 
   private render(): void {
-    const signIn = qs<HTMLButtonElement>("#google-sign-in");
+    const googleSignIn = qs<HTMLButtonElement>("#google-sign-in");
+    const facebookSignIn = qs<HTMLButtonElement>("#facebook-sign-in");
     const signOut = qs<HTMLButtonElement>("#google-sign-out");
-    signIn.hidden = Boolean(this.user);
+    googleSignIn.hidden = Boolean(this.user);
+    facebookSignIn.hidden = Boolean(this.user);
     signOut.hidden = !this.user;
     qs("#auth-status").textContent = this.user
-      ? `Signed in as ${this.user.email ?? "Google user"}.`
-      : "Sign in with an authorized Google account for Supabase-backed admin writes, or use the local passcode for this browser only.";
+      ? `Signed in as ${this.user.email ?? "authenticated user"}.`
+      : "Sign in with an authorized Google or Facebook account for Supabase-backed admin writes, or use the local passcode for this browser only.";
   }
 }

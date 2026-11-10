@@ -6,7 +6,7 @@ import "@/css/components.css";
 import "@/css/layout.css";
 
 export const metadata: Metadata = {
-  title: "Real Estate Map Explorer",
+  title: "Smart Property Listing",
   description:
     "Explore clearly labeled sample real-estate listings on an interactive satellite map.",
 };
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#12322d",
+  themeColor: "#3b41c7",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

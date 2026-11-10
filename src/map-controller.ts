@@ -46,7 +46,7 @@ export class MapController {
     });
     this.map.addControl(
       new maplibregl.NavigationControl({ showCompass: false }),
-      "top-left",
+      "bottom-right",
     );
     this.map.addControl(
       new maplibregl.AttributionControl({ compact: true }),
@@ -60,6 +60,11 @@ export class MapController {
     this.map.on("click", (event: MapMouseEvent) =>
       this.mapClickHandler?.([event.lngLat.lat, event.lngLat.lng]),
     );
+  }
+
+  invalidateSize(): void {
+    // The map is hidden in list view; recompute dimensions when it reappears.
+    requestAnimationFrame(() => this.map.resize());
   }
 
   render(data: Dataset): void {
@@ -89,7 +94,7 @@ export class MapController {
     });
   }
 
-  select(property: Property, trigger?: HTMLElement): void {
+  focus(property: Property): void {
     this.clearSelection();
     this.selectedProperty = property;
     this.markers
@@ -100,11 +105,15 @@ export class MapController {
     this.map.fitBounds(coordinateBounds(property.polygon), {
       padding:
         innerWidth > 900
-          ? { top: 40, right: 510, bottom: 40, left: 40 }
+          ? { top: 40, right: 470, bottom: 40, left: 60 }
           : { top: 30, right: 30, bottom: 260, left: 30 },
       maxZoom: 18,
       duration: reducedMotion() ? 0 : 700,
     });
+  }
+
+  select(property: Property, trigger?: HTMLElement): void {
+    this.focus(property);
     this.onPropertySelect(property, trigger);
   }
 
@@ -125,7 +134,10 @@ export class MapController {
     const coords = this.data.properties.map((item) => item.coordinates);
     if (coords.length)
       this.map.fitBounds(coordinateBounds(coords), {
-        padding: 80,
+        padding:
+          innerWidth > 900
+            ? { top: 80, right: 510, bottom: 80, left: 80 }
+            : 80,
         maxZoom: config.zoom,
         duration: reducedMotion() ? 0 : 700,
       });

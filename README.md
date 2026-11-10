@@ -4,6 +4,12 @@ A Next.js App Router + TypeScript map-first application for exploring clearly la
 
 > Bundled listings, boundaries, prices, routes, availability, contact details, and media are fictional and unverified. Boundary dimensions are geodesic estimates, not surveys.
 
+## Public portal experience
+
+The homepage combines a property-listing portal with the interactive map. Visitors can search the validated dataset by keyword, location, price range, and availability, switch between list and map views on mobile, select a listing card to locate it on the map, and inspect its details. The **List your property** entry point explains the simple submission flow and offers Google or Facebook sign-in before opening the listing workspace.
+
+The current property form accepts property details, an owner-supplied map boundary, price, description, utilities, and HTTP(S) media URLs. It requires the submitter to confirm that they own or are authorized to advertise the property. This confirmation is not verification. Until roles, per-user ownership, moderation, and server-side publication approval are implemented, the workflow remains a controlled demonstration and must not be opened for unrestricted production submissions.
+
 ## Requirements
 
 - Node.js 22+
@@ -75,6 +81,16 @@ The app tests the remote dataset during startup and falls back to the validated 
 
 The app uses Supabase's PKCE callback at `/auth/callback` and refreshes cookie sessions through the Next.js 16 proxy. Google-authenticated users satisfy the existing `authenticated` RLS write policies. The documented `admin` passcode remains local-only and cannot grant Supabase write access.
 
+### Facebook sign-in
+
+1. Create a Facebook app in the [Meta for Developers dashboard](https://developers.facebook.com/) and add the Facebook Login product.
+2. In **Facebook Login → Settings**, add the Supabase callback URL shown under **Supabase Authentication → Providers → Facebook** as a valid OAuth redirect URI. It follows `https://<project-ref>.supabase.co/auth/v1/callback`; local Supabase uses `http://localhost:54321/auth/v1/callback`.
+3. Enable both `public_profile` and `email` for the app's authentication use case. Supabase requires the email permission for a complete user identity.
+4. Copy the Facebook App ID and App Secret into the Facebook provider settings in Supabase and enable the provider.
+5. Keep `http://localhost:3000/auth/callback` and the production callback route in the Supabase redirect allow list.
+
+Facebook apps begin in development mode, where only app administrators, developers, and testers can sign in. Complete Meta's required app details and review steps before enabling Facebook sign-in for the public. The application uses the same Supabase PKCE callback and RLS-backed authenticated role for Google and Facebook; it never exposes the Facebook App Secret to the browser.
+
 For local Supabase development, install the Supabase CLI and run `supabase start`, then `supabase db reset`. Regenerate `src/lib/supabase/database.types.ts` after schema changes when a project is linked.
 
 ## Deployment
@@ -84,3 +100,12 @@ Run `npm run build` and deploy to a Node-compatible Next.js platform such as Ver
 Before publishing real inventory, add Supabase Auth and roles, server-side authorization and validation, normalized property tables if query needs justify them, audit history, backups, approved media storage, and a listing-verification workflow.
 
 See `docs/ARCHITECTURE.md` for trust boundaries and fallback behavior.
+
+## Business planning
+
+The commercial plan starts with a supply-first launch in one Philippine province and prioritizes affordable, underrepresented property inventory. These documents are planning artifacts; they do not imply that the current fictional demo data or local admin workflow is ready for real transactions.
+
+- [`docs/BUSINESS_PLAN.md`](docs/BUSINESS_PLAN.md) — market position, customer groups, business model, trust model, and expansion rules
+- [`docs/PRICING_AND_OFFERS.md`](docs/PRICING_AND_OFFERS.md) — proposed B2C and B2B packages, launch offers, and pricing validation
+- [`docs/GROWTH_ROADMAP.md`](docs/GROWTH_ROADMAP.md) — execution plan from the first user to 100 registered users and later provincial expansion
+- [`docs/METRICS_AND_OPERATIONS.md`](docs/METRICS_AND_OPERATIONS.md) — metric definitions, funnel, service standards, data requirements, and operating scorecards

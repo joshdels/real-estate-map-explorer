@@ -25,6 +25,14 @@ export interface Property {
   routeLabels?: string[];
 }
 
+export interface ListingReport {
+  id: string;
+  propertyId: string;
+  title?: string;
+  reason: string;
+  createdAt: string;
+}
+
 export interface Destination {
   id: string;
   name: string;

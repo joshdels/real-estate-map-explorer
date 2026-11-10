@@ -2,6 +2,7 @@ import type {
   DataRepository,
   Dataset,
   Destination,
+  ListingReport,
   Property,
   Route,
 } from "./types";
@@ -74,6 +75,44 @@ export class PropertyStore {
   async removeRoute(id: string): Promise<void> {
     this.data.routes = this.data.routes.filter((item) => item.id !== id);
     await this.persist();
+  }
+
+  private readonly reportsKey = "spl-listing-reports";
+  listReports(): ListingReport[] {
+    try {
+      const raw = localStorage.getItem(this.reportsKey);
+      const parsed: unknown = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? (parsed as ListingReport[]) : [];
+    } catch {
+      return [];
+    }
+  }
+  async reportListing(
+    propertyId: string,
+    reason: string,
+    title?: string,
+  ): Promise<void> {
+    const reports = this.listReports();
+    reports.unshift({
+      id: `report-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      propertyId,
+      title,
+      reason,
+      createdAt: new Date().toISOString(),
+    });
+    try {
+      localStorage.setItem(this.reportsKey, JSON.stringify(reports.slice(0, 200)));
+    } catch {
+      /* storage unavailable; report is best-effort local only */
+    }
+  }
+  async resolveReport(id: string): Promise<void> {
+    const remaining = this.listReports().filter((report) => report.id !== id);
+    try {
+      localStorage.setItem(this.reportsKey, JSON.stringify(remaining));
+    } catch {
+      /* storage unavailable */
+    }
   }
 
   private async persist(): Promise<void> {
