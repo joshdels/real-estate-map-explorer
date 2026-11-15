@@ -1,22 +1,41 @@
 # AGENTS.md
 
+Shared instructions for every coding agent (Claude Code, Codex/GPT, and others). `CLAUDE.md` files only import the `AGENTS.md` beside them, so edit `AGENTS.md` and both tools stay in sync. Each major folder has its own `AGENTS.md` with local rules; read the one nearest the file you are changing.
+
 ## Mission
 
-Build **Real Estate Map Explorer** into a trustworthy, responsive, map-first application for discovering properties for sale or rent. Users should be able to understand what is available in an area, narrow results quickly, compare listings, and open useful property details with minimal friction.
+**Smart Property Listing** is a professional real-estate service for the Philippines. It showcases houses, lots, condos, farms, and commercial property for sale or rent on a satellite map tied to official PSA / NAMRIA boundaries, so the public can find and judge a property quickly and providers (owners, brokers, developers) sell faster.
 
-The repository contains a standalone reconstruction of the supplied Canva map screenshots. It uses Leaflet with Esri satellite tiles and clearly labeled fictional sample data. Continue moving it toward a verified real-estate product; do not describe sample boundaries or listings as authoritative.
+Three audiences, each with a clear path:
 
-## Source of truth
+| Audience | Goal | Surface |
+| --- | --- | --- |
+| Buyers and renters | Find a property in a known area and trust what they see | `/`, `/explore`, `/property/[id]`, `/providers` |
+| Clients (providers) | List, group, highlight, and sell their properties | `/dashboard`, `/list-property` |
+| Staff (admin, employee) | Keep listings accurate: review, flags, assisted listings | `/staff` |
 
-- `app/`, `components/`, `css/`, and `src/` are the maintained Next.js + TypeScript application source.
-- `canva.html` is a saved Canva export and reference artifact. It is generated, includes Canva runtime markup, and points to a missing `canva_files/index.html`.
-- `public/data/data.json` is the editable, clearly fictional seed dataset for properties, utilities, destinations, and routes.
-- `src/config.ts` contains map configuration and public action definitions; do not duplicate seed records there.
-- `src/store.ts` and `src/repositories/` own persistence and Supabase fallback behavior; UI modules must not write storage directly.
-- `src/map-controller.ts`, `src/details.ts`, and `src/admin.ts` own map rendering, public details, and admin workflows respectively. Keep `src/main.ts` limited to client composition and top-level coordination.
-- `README.md` documents the current limitations and intended product direction.
+All bundled listings, providers, reviews, and prices are fictional samples. Never describe sample data, simplified boundaries, or a "staff reviewed" badge as verified.
 
-Do not hand-edit generated sections of `canva.html` for normal feature work. Do not create or assume behavior based solely on class names in that file; they are generated and the actual codelet is absent.
+## Where things live
+
+```text
+src/app/          Next.js App Router routes (thin: metadata + composition)
+src/components/   React components, grouped by feature
+src/hooks/        React hooks (useDataset, useSession, useBoundaryIndex)
+src/lib/          Framework-free domain logic, validation, persistence, geo
+src/explorer/     Imperative MapLibre explorer modules (map, workspace, media)
+src/styles/       Design tokens and CSS
+public/data/      Fictional seed dataset and the simplified boundary index (published as-is; see the seed-data skill)
+scripts/          Boundary build and database load scripts
+supabase/         Migrations and seed guidance
+tests/            Vitest suites
+docs/             Architecture and business planning
+.claude/skills/   Step-by-step workflows, readable by any agent
+```
+
+- `@/` resolves to `src/`. Import with `@/lib/...`, `@/components/...`, `@/hooks/...`.
+- `public/data/data.json` is the only seed. `src/lib/brand.ts` is the only place for brand copy.
+- `canva.html` (if present) is a generated reference export. Do not edit or rely on it.
 
 ## Product priorities
 
@@ -28,70 +47,106 @@ When requirements are incomplete, optimize in this order:
 4. Responsive and accessible interaction.
 5. Visual polish and animation.
 
-The primary workflow is: choose an area, explore map results, refine filters, select a listing, and review its details. Preserve that flow when adding features.
+The primary workflow is: choose an area, explore map results, refine filters, select a listing, review its details, contact or share. Preserve that flow when adding features.
 
-## Expected domain model
+## Domain rules
 
-Do not invent production listing data. Fixtures and samples must be clearly labeled. A future property model will likely need a stable ID, listing status, sale/rent purpose, title, property type, price and currency, coordinates, human-readable location, bedrooms, bathrooms, floor/lot area with units, images, description, amenities, agent or source attribution, and timestamps. Document any schema introduced and distinguish required fields from optional ones.
-
-Coordinates, prices, units, and availability must be validated before display. Never expose private seller information, secrets, or precise location data that the product is not authorized to publish.
-
-Optional property media belongs under a `media` object with `panoramaUrl`, `aerialVideoUrl`, and `walkthroughVideoUrl`. Remote URLs are untrusted input: permit only HTTP(S), construct DOM elements without injecting user HTML, use privacy-conscious embeds, and label bundled examples as samples.
+- **Listings** (`Property` in `src/lib/types.ts`): required `id`, `title`, `address`, `coordinates`, `polygon` (3+ points), `area`, `price`, `status`, `utilities`. Optional management fields: `purpose` (sale/rent), `propertyType`, `providerId`, `groupId`, `featured`, `createdAt`, `review`, `assistedBy`, `adminArea`, `media`. `validateDataset()` fills defaults and drops invalid values; never render unvalidated data.
+- **Review state**: `pending` and `reviewed` listings are public; `suspended` listings are hidden everywhere (use `isPublic()` / `publicListings()`). New listings publish immediately as `pending`.
+- **Providers, groups, reviews** live in the dataset. A listing may only join a group owned by its own provider. Only `published` reviews count toward ratings.
+- **Recommended ranking** (`src/lib/listings.ts`) orders by a weighted provider rating that starts every provider at a neutral prior, so one review cannot outrank many. Change it only with a test.
+- **Official areas**: `adminArea` comes from `BoundaryService.locate()` using `public/data/boundaries/`. Outlines are simplified; label them as not surveyed and keep the PSA / NAMRIA credit visible.
+- **Roles** are a local demo (`src/lib/session.ts`): passcode `admin` = administrator, `staff` = employee, and clients pick a provider profile. This is not authentication. Never store real private data behind it or extend it into a security boundary.
+- **Privacy**: the dataset is world-readable. Reports, assisted-listing cases, and the activity log stay in browser storage (`src/lib/local-records.ts`). Never put seller contact details, IDs, or secrets in the dataset, seed, or repo.
+- Media URLs are untrusted: HTTP(S) or root-relative only, built with DOM/React APIs, never injected HTML.
 
 ## Engineering guidelines
 
-- Prefer plain, maintainable HTML, CSS, and JavaScript until the application complexity justifies a framework or build system.
-- Keep modules focused. Put configuration and provider integration behind explicit interfaces rather than coupling them to UI components.
-- Never commit API keys or tokens. Use documented environment-based configuration when external services are introduced.
-- Keep map and list selection synchronized and make shared state explicit.
-- Account for loading, empty, no-results, partial-data, offline, and provider-error states.
-- Preserve required map-provider and data-source attribution.
-- Avoid introducing a dependency without documenting why it is needed and how to install, test, and update it.
-- Update `README.md` whenever setup, architecture, dependencies, or product behavior changes.
-- Preserve the module boundaries above. Data mutations go through `PropertyStore`, and map interactions go through `MapController`.
-- Treat browser storage as disposable local state. Any move to production data requires a backend, authenticated authorization, server-side validation, migrations, and backups.
-- Load records through `PropertyStore.initialize()` and validate JSON structure, coordinates, prices, and media URLs before rendering. `public/data/data.json` changes apply when the local provider has no version-matching override or after local site data is cleared.
-- The `admin` passcode is a visible local-access affordance, not authentication. Never extend it into a false security boundary or store real private listing data behind it.
+- All dataset mutations go through `PropertyStore`. React code reaches it with `useDataset().mutate`; the explorer receives it in `src/explorer/main.ts`. UI code never writes storage directly.
+- Put logic in `src/lib` as pure functions with tests. Components render and call hooks; routes compose components.
+- Links *into* `/explore` are plain `<a>` tags and links *out of* it are too: the explorer attaches behavior once per page load and needs a full navigation.
+- Handle loading, empty, no-results, partial-data, offline, and provider-error states.
+- Preserve map-provider (Esri) and boundary (PSA / NAMRIA) attribution.
+- Do not add a dependency without documenting why and how to install, test, and update it.
+- Never commit API keys, database URLs, or tokens. Only `NEXT_PUBLIC_*` values may reach the browser.
+- Update `README.md` and the nearest `AGENTS.md` when setup, structure, or behavior changes.
 
-## Admin behavior
+## Explorer and workspace behavior
 
-- The lock button opens the admin access dialog; the documented local passcode is `admin`.
-- The admin console manages properties, utility defaults, routes, and destination locations.
-- Boundary pinning must require at least three finite latitude/longitude points before a property can be saved.
-- New properties, routes, and destinations must appear on the public map without a reload.
-- The home button must exit admin mode, close property details, cancel map-picking mode, and restore the overview.
-- Route lines and destination markers stay hidden by default. Show only the selected property's routes after an explicit **Routes** action, and hide them again when selection closes or changes.
-- Selecting a property keeps dimensions hidden until **Lot Layout** is pressed. That button toggles calculated labels for every polygon edge and the total perimeter. Treat these as geodesic estimates, never surveyed values.
-- Seed and locally created records may be changed or removed through `PropertyStore`. Persist them through the configured repository, falling back to `localStorage` when Supabase is unavailable or rejects a write; never rewrite `public/data/data.json` from the browser.
-- Property media entered through the admin form must persist with its property. Missing media keeps its public action disabled; it must not open an empty or broken viewer.
-- Clearly label all sample and user-entered map data as unverified until a production data-validation workflow exists.
+- The header **List your property** button opens `/list-property`, a dedicated split workspace with the drawing map on the left and the listing form on the right. It opens the access dialog first when no session exists.
+- The workspace manages properties, utility defaults, routes, destinations, and local reports.
+- Boundary pinning requires at least three finite latitude/longitude points before a property can be saved.
+- New properties, routes, and destinations appear on the public map without a reload.
+- Route lines and destination markers stay hidden until an explicit **Routes** action, and hide again when selection closes or changes.
+- **Lot Layout** toggles calculated edge lengths and perimeter. These are geodesic estimates, never surveyed values.
+- Persist through the configured repository, falling back to `localStorage` when Supabase is unavailable or rejects a write. Never rewrite `public/data/data.json` from the browser.
+- Missing media keeps its action disabled; it must not open an empty viewer.
 
 ## UX and accessibility
 
-- Design mobile-first, then verify wide desktop layouts.
-- All filters, listing cards, dialogs, and map-adjacent controls must be keyboard operable.
-- Use semantic HTML, visible focus states, useful accessible names, and sufficient contrast.
-- Do not rely on marker color alone to communicate listing state or category.
-- Format currency, numbers, and area units consistently for the selected market.
-- Avoid obstructing the map with permanent panels on small screens; preserve a clear way to return to results.
-- Respect reduced-motion preferences and avoid unnecessary map movement.
+- Mobile-first, then verify wide desktop. No horizontal page scroll at 390 px.
+- Every filter, card action, dialog, table control, and map-adjacent control is keyboard operable with a visible focus state and an accessible name.
+- Never communicate status by color alone; pair it with text.
+- Format money with `formatPrice()` (PHP, rent shown per month) and dates in `Asia/Manila`.
+- Respect reduced motion and avoid unnecessary map movement.
+
+### Product language
+
+- Write for buyers, owners, brokers, developers, and staff. Use short, familiar words that explain the benefit or next action.
+- Avoid internal, technical, government, and mapping jargon in marketing copy. Say "search by region, province, and city" instead of leading with boundary datasets or agency names. Keep PSA / NAMRIA wording only where the required data credit or accuracy notice appears.
+- Avoid em dashes and en dashes in interface copy. Use a full stop, comma, colon, or a new sentence instead.
+- Do not use vague headings such as "Kept clean" or system terms such as "flag workflow" when a clear user outcome is available.
+
+### Visual accent
+
+- Neon yellow `--color-neon` is a controlled highlight, not a second theme. Keep it to roughly 8 to 10 percent or less of a composition.
+- Use neon only for small points of emphasis on dark indigo surfaces, such as hero statistics, short indicator lines, or a selected data point. Do not use it for large backgrounds, body text, cards, footer sections, or routine controls.
+
+### Icon system
+
+- Phosphor is the product icon system. React UI imports named icons from `@phosphor-icons/react`; the imperative explorer creates regular-weight icons with `phosphorIcon()` from `src/explorer/dom.ts` and `@phosphor-icons/web/regular`.
+- Use regular weight at 18–20 px for ordinary controls, `fill` or `bold` only for selected states, and duotone sparingly for prominent feature or empty-state artwork. Keep one visual weight within a control group.
+- Do not introduce emoji, Unicode pictograms, a second icon library, hand-copied SVG paths, or icon fonts from a CDN. Brand marks and third-party logos are separate assets, not substitutes from Phosphor.
+- Icons that repeat a visible label are decorative (`aria-hidden="true"`). Icon-only controls require a specific accessible name. Keep text beside unfamiliar actions such as Lot Layout, Drone Aerial, and Routes.
 
 ## Verification
 
-For every change, perform the checks that apply:
+For every change, run what applies (the `verify` skill has the full procedure):
 
-1. Serve the project over HTTP; do not validate only with `file://`.
-2. Check the browser console for errors and failed network requests.
-3. Test at mobile and desktop widths.
-4. Verify keyboard access and visible focus for changed controls.
-5. Exercise success, empty, loading, and failure states affected by the change.
-6. Confirm that no credentials, private data, or unlicensed assets were added.
+1. `npm run typecheck`, `npm run lint`, `npm test`.
+2. `npm run build` for cross-cutting changes.
+3. Serve over HTTP (`npm run dev`), check the console and failed requests, and exercise the changed flow at mobile and desktop widths with the keyboard.
+4. Confirm no credentials, private data, or unlicensed assets were added.
 
-Run `npm run typecheck`, `npm test`, and `npm run build` for cross-cutting changes. Run the smallest relevant Vitest file while iterating, then the full suite before completion.
+A change is done when the behavior works over HTTP, edge states are handled, accessibility has not regressed, docs match, and tests pass. Report failures plainly; do not claim a check you did not run.
 
-## Definition of done
+## Skills (shared workflows)
 
-A change is complete when its user-facing behavior works through a local HTTP server, relevant edge states are handled, accessibility has not regressed, documentation reflects new setup or architectural decisions, and no secrets or unjustified generated artifacts are included.
+Workflows live in `.claude/skills/<name>/SKILL.md`. Claude Code loads them automatically. Other agents: open the file and follow it.
+
+| Skill | Use it when |
+| --- | --- |
+| `verify` | Before calling any change done |
+| `add-feature` | Deciding where new code belongs |
+| `seed-data` | Adding or changing sample listings, providers, or reviews |
+| `boundaries` | Rebuilding the boundary index or loading it into Postgres |
+| `design-review` | Changing visuals, copy, or brand |
+| `improve` | Picking and delivering the next upgrade from the backlog |
+
+## Upgrade backlog
+
+Ordered by value. When you finish one, remove it and note what changed in `README.md`.
+
+1. **Real accounts and roles.** Replace the demo passcodes with Supabase Auth, a `profiles` table with roles, and RLS so clients edit only their own listings and only staff can moderate.
+2. **Normalized tables.** Move listings, providers, groups, reviews, reports, and assisted cases out of the single `app_datasets` JSON row into tables with server-side validation.
+3. **Server-side reports and moderation.** Reports are per-browser today, so staff only see flags raised on their own device.
+4. **PostGIS area lookup.** Use `locate_admin_area()` (migration `20261115000000`) once the boundary tables are loaded, and add barangay level.
+5. **Media uploads.** Supabase Storage with size/type checks instead of pasted URLs.
+6. **Listing edit form.** Listings can be created, re-grouped, re-statused, and removed, but not edited field by field.
+7. **Buyer tools.** Saved listings, side-by-side comparison, and inquiry forms routed to the provider.
+8. **SEO.** Server-render listing and provider pages from the database, add a sitemap and structured data.
+9. **Map scale.** Marker clustering and viewport-based loading before the listing count grows.
+10. **Sample agent card.** The seed `agent` block looks like a real name and phone number; confirm it is fictional or replace it.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

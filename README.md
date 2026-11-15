@@ -1,20 +1,61 @@
-# Real Estate Map Explorer
+# Smart Property Listing
 
-A Next.js App Router + TypeScript map-first application for exploring clearly labeled fictional property data. MapLibre GL renders Esri satellite imagery, Supabase is the prepared shared-data provider, and validated JSON/local storage keeps the demo available when Supabase is not configured.
+A Next.js App Router + TypeScript application for a Philippine real-estate service: property for sale or rent shown on a satellite map and searchable by official PSA / NAMRIA region, province, and city. Providers (owners, brokers, developers) manage and group their listings, buyers rate providers, and staff review listings and handle reports.
 
-> Bundled listings, boundaries, prices, routes, availability, contact details, and media are fictional and unverified. Boundary dimensions are geodesic estimates, not surveys.
+> Bundled listings, providers, reviews, boundaries, prices, routes, availability, contact details, and media are fictional and unverified. Boundary dimensions are geodesic estimates, not surveys. Administrative outlines are simplified and are not legal boundaries. The role system is a local demo, not authentication.
 
-## Public portal experience
+## What is in the product
 
-The homepage combines a property-listing portal with the interactive map. Visitors can search the validated dataset by keyword, location, price range, and availability, switch between list and map views on mobile, select a listing card to locate it on the map, and inspect its details. The **List your property** entry point explains the simple submission flow and offers Google or Facebook sign-in before opening the listing workspace.
+| Route | Who it is for | What it does |
+| --- | --- | --- |
+| `/` | Everyone | Brand and positioning, area search, paths for buyers / owners / brokers, recently added listings, suggested listings from the best-reviewed providers, top providers |
+| `/explore` | Buyers | Listing index and map. Filter by region, province, city, sale or rent, property type, price, status, keyword. Sort by recommended, newest, or price. Each card has **Map**, **Share**, and **Report** |
+| `/list-property` | Clients and staff | Focused split workspace with the map and boundary drawing on the left and the validated property form on the right |
+| `/become-a-provider` | Owners, brokers, and developers | Positions the provider as the expert and links to profile setup and listing creation |
+| `/property/[id]` | Buyers | Photos, facts, provider and rating, official area, media, mini map, share and report |
+| `/providers`, `/providers/[id]` | Buyers | Providers ordered by rating; a profile shows highlighted listings, listing groups, and reviews (visitors can add or flag a review) |
+| `/dashboard` | Clients | Listing table with status, group, and highlight controls; create and delete groups; edit the public profile; add a listing |
+| `/staff` | Admin and employees | Review queue, reported listings and flagged reviews, assisted-listing cases, suspended listings, providers, activity log |
 
-The current property form accepts property details, an owner-supplied map boundary, price, description, utilities, and HTTP(S) media URLs. It requires the submitter to confirm that they own or are authorized to advertise the property. This confirmation is not verification. Until roles, per-user ownership, moderation, and server-side publication approval are implemented, the workflow remains a controlled demonstration and must not be opened for unrestricted production submissions.
+### How ranking works
+
+“Recommended” and “Suggested” order listings by the provider's review rating. Every provider starts from a neutral 3.5 with the weight of three reviews, so a single 5-star review cannot outrank a provider with many strong reviews. Highlighted and staff-reviewed listings get a small boost; reserved and sold listings drop. Flagged and removed reviews do not count. The logic is in `src/lib/listings.ts` and covered by `tests/listings.test.ts`.
+
+### Official area search
+
+`public/data/boundaries/` holds a simplified copy of the PSA / NAMRIA administrative boundaries (17 regions, 88 provinces, 1,642 cities and municipalities, about 4 MB). A listing's region, province, and city are found from its map pins when it is created. Selecting an area filters the list and the markers and draws the outline on the map. Rebuild with:
+
+```bash
+scripts/build-boundaries.sh /path/to/boundary-shapefiles   # needs GDAL and Node 22+
+```
+
+The source shapefiles are about 1.6 GB and are not in the repository. A literal 1 m simplification still leaves about 80 MB per layer, so the web copy uses about 110 m for cities and 330 m for provinces. Points that fall in a simplification gap use the nearest outline within 15 km and are marked approximate.
+
+To load the boundaries into Postgres (local or hosted Supabase), apply `supabase/migrations/20261115000000_create_admin_boundaries.sql`, then:
+
+```bash
+SUPABASE_DB_URL='postgresql://...' scripts/load-boundaries-db.sh /path/to/boundary-shapefiles
+```
+
+This creates `admin_regions`, `admin_provinces`, `admin_cities` and the `locate_admin_area(lat, lng)` function. The app does not call the database function yet; it reads the static files.
+
+### Roles (local demo only)
+
+| Role | How to enter | Can do |
+| --- | --- | --- |
+| Client | `/dashboard`, pick or create a provider profile | Manage that provider's listings, groups, and profile |
+| Employee | `/staff`, passcode `staff` | Mark listings reviewed, suspend listings, dismiss reports, keep or remove flagged reviews, manage assisted cases, add providers |
+| Administrator | `/staff`, passcode `admin` | Everything above, plus restore or delete suspended listings, mark providers staff reviewed, view the activity log |
+
+The passcodes are public and stored in session storage. They protect nothing. Reports, assisted cases, and the activity log are kept in the browser's local storage, so staff see only flags raised on the same device. New listings are public immediately and labeled “not yet reviewed by staff”; “Staff reviewed” means a staff member looked at the listing, not that ownership, price, or boundaries were verified. Real use needs Supabase Auth, per-user ownership, and server-side authorization (see the upgrade backlog in `AGENTS.md`).
 
 ## Requirements
 
 - Node.js 22+
 - npm 10+
 - Internet access for Esri tiles and optional remote media
+
+The interface uses the MIT-licensed Phosphor icon family. React surfaces import tree-shakable SVG components from `@phosphor-icons/react`; the imperative MapLibre explorer uses the regular weight from `@phosphor-icons/web`. Both packages are installed by `npm install` and should be updated together with the normal dependency review and verification commands below.
 
 ## Development
 
@@ -37,31 +78,41 @@ npm start
 ## Structure
 
 ```text
-app/                         # App Router layout, page, loading and error boundaries
-components/map-explorer.tsx  # Client boundary and accessible application markup
-css/                         # Design tokens and responsive styles
-public/data/data.json        # Fictional validated seed data
 src/
-├── main.ts                  # Client composition only
-├── store.ts                 # Mutation and persistence boundary
-├── map-controller.ts        # MapLibre GL rendering and map interaction
-├── details.ts               # Public listing details
-├── admin.ts                 # Local admin workflows
-├── validation.ts            # Runtime validation and URL sanitation
-├── lib/supabase/            # Typed browser/server Supabase clients
-└── repositories/            # Local and Supabase adapters
-supabase/                    # CLI config, migrations, and seed guidance
+├── app/                      # App Router routes (thin: metadata + composition)
+├── components/               # React UI by feature: layout, listings, home, providers,
+│                             #   property, dashboard, staff, explorer (markup)
+├── hooks/                    # useDataset, useSession, useBoundaryIndex
+├── lib/                      # Framework-free logic
+│   ├── types.ts, validation.ts, store.ts, listings.ts
+│   ├── session.ts, local-records.ts, share.ts, brand.ts, seed.ts
+│   ├── geo/boundaries.ts     # point lookup over the boundary files
+│   ├── repositories/         # local and Supabase adapters
+│   └── supabase/             # typed browser/server clients
+├── explorer/                 # Imperative MapLibre explorer (map, workspace, media)
+├── styles/                   # tokens.css, components.css, layout.css, site.css
+└── proxy.ts                  # Next.js 16 proxy: Supabase session refresh
+public/data/data.json         # Fictional seed
+public/data/boundaries/       # Generated boundary index
+scripts/                      # Boundary build and database load
+supabase/                     # Migrations
+tests/                        # Vitest suites
+.claude/skills/               # Shared agent workflows
 ```
 
-The imperative MapLibre GL UI remains behind one client component because the map requires browser APIs. Next.js owns metadata, routing, production compilation, and future server/auth boundaries. `PropertyStore` remains the only data mutation boundary.
+`@/` resolves to `src/`. `PropertyStore` is the only data mutation boundary: React components reach it through `useDataset()`, the explorer through `src/explorer/main.ts`. The map explorer stays imperative behind one client component because MapLibre needs browser APIs; it attaches once per page load, so links into and out of `/explore` are full navigations.
 
 MapLibre 6 loads `public/maplibre-gl-worker.mjs` from the same origin because Next.js does not reliably emit MapLibre's module worker URL. The file is the unmodified worker distributed with the pinned `maplibre-gl` dependency; refresh it from `node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs` whenever MapLibre is upgraded.
+
+### Working with coding agents
+
+`AGENTS.md` (root and one per major folder) is the single source of instructions for Claude Code, Codex / GPT, and other agents. Each `CLAUDE.md` only imports the `AGENTS.md` beside it. Shared workflows are in `.claude/skills/` (`verify`, `add-feature`, `seed-data`, `boundaries`, `design-review`, `improve`); Claude Code loads them automatically and other agents can read the `SKILL.md` files directly.
 
 ## Supabase setup
 
 1. Create or link a Supabase project.
 2. Apply `supabase/migrations/20261110000000_create_app_datasets.sql` through the Supabase CLI or SQL editor.
-3. Insert a trusted `public.app_datasets` row with `slug = 'default'` and a validated payload shaped like `public/data/data.json`.
+3. Insert a trusted `public.app_datasets` row with `slug = 'default'` and a validated payload shaped like `public/data/data.json`. Update this row whenever `data.json` changes; an older payload still loads, but without providers, groups, reviews, or official areas.
 4. Copy `.env.example` to `.env.local` and set:
 
 ```dotenv
@@ -69,7 +120,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 ```
 
-Find both values in the Supabase dashboard under **Project Settings → API** (or **Settings → API Keys** in the current dashboard). Only the URL and publishable key are browser-visible. The legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` name remains supported for existing deployments. Never use a secret or service-role key in a `NEXT_PUBLIC_*` variable. RLS permits anonymous reads of the default dataset and requires an authenticated Supabase user for writes. The visible local passcode `admin` is a UI convenience, not backend authentication; until an auth flow exists, rejected remote writes fall back to local storage.
+Find both values in the Supabase dashboard under **Project Settings → API** (or **Settings → API Keys** in the current dashboard). Only the URL and publishable key are browser-visible. The legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` name remains supported for existing deployments. Never use a secret or service-role key in a `NEXT_PUBLIC_*` variable. RLS permits anonymous reads of the default dataset and requires an authenticated Supabase user for writes. The visible local passcodes (`admin`, `staff`) are a UI convenience, not backend authentication; until an auth flow exists, rejected remote writes fall back to local storage.
 
 The app tests the remote dataset during startup and falls back to the validated local sample after six seconds if Supabase is unavailable or incomplete, so a provider issue does not leave the map blocked.
 
@@ -79,7 +130,7 @@ The app tests the remote dataset during startup and falls back to the validated 
 2. In Supabase **Authentication → Providers → Google**, copy the displayed Supabase callback URL into Google's authorized redirect URIs, enter the Google Client ID and Client Secret, and enable the provider.
 3. In Supabase **Authentication → URL Configuration**, set the Site URL and add `http://localhost:3000/auth/callback` (plus the production equivalent) to the redirect allow list.
 
-The app uses Supabase's PKCE callback at `/auth/callback` and refreshes cookie sessions through the Next.js 16 proxy. Google-authenticated users satisfy the existing `authenticated` RLS write policies. The documented `admin` passcode remains local-only and cannot grant Supabase write access.
+The app uses Supabase's PKCE callback at `/auth/callback` and refreshes cookie sessions through the Next.js 16 proxy. Google-authenticated users satisfy the existing `authenticated` RLS write policies. The documented demo passcodes remain local-only and cannot grant Supabase write access.
 
 ### Facebook sign-in
 

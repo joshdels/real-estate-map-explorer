@@ -1,31 +1,26 @@
-# AGENTS.md — `src/` (Client Logic)
+# AGENTS.md — `src/`
 
-Scoped rules for the browser modules. These add to the root `AGENTS.md`.
+Application source. Adds to the root `AGENTS.md`. Each subfolder has its own rules.
 
-## Module boundaries (do not blur)
+## Layers (imports flow downward only)
 
-- `main.ts` — composition and top-level coordination only. It wires modules to DOM `id`s and owns the listing portal (search/filter/render of `#property-list`). Keep feature logic out of here.
-- `map-controller.ts` — owns all MapLibre rendering and interaction. UI code goes through it; nothing else touches the map instance.
-- `details.ts` — the in-app details panel (currently not opened by the main flow; the full detail is the `/property/[id]` route).
-- `admin.ts` — admin console (properties, utilities, routes, locations, **reports**).
-- `store.ts` + `repositories/` — persistence. **UI modules must not write storage directly**; mutate through `PropertyStore`, which persists via the configured repository and falls back to `localStorage`.
-- `dom.ts` provides `qs()`; every element it fetches must exist in `components/map-explorer.tsx`.
+```text
+app/         routes: metadata, static params, page composition
+components/  React UI, grouped by feature
+hooks/       React hooks that connect components to lib/
+explorer/    imperative MapLibre explorer (attached to components/explorer markup)
+lib/         pure TypeScript: types, validation, store, ranking, geo, session
+styles/      CSS
+```
 
-## Selection vs. navigation
+- `lib/` imports nothing from the other folders and has no React or DOM-framework code.
+- `hooks/` and `explorer/` may import `lib/`. `components/` may import `hooks/` and `lib/`. `app/` imports `components/` and `lib/`.
+- Never import `app/` from anywhere, and never import `explorer/` from React components except the single lazy `import("@/explorer/main")` in `components/explorer/map-explorer.tsx`.
+- `proxy.ts` is the Next.js 16 request proxy (Supabase session refresh). It must stay directly in `src/`.
+- Phosphor crosses the React / imperative boundary deliberately: components use `@phosphor-icons/react`, while explorer DOM modules use `phosphorIcon()` and the globally loaded regular webfont. Do not make either layer depend on the other to render an icon.
+- User-facing copy uses plain language for buyers and property providers. Avoid technical or agency jargon except in required credits and notices, and avoid em dashes or en dashes in interface text.
 
-- `MapController.select(property)` flies to the lot **and** fires the `onPropertySelect` callback. In `main.ts` that callback **navigates to `/property/<id>`** (the full detail page) — a marker click leaves the SPA.
-- `MapController.focus(property)` flies/highlights **without** firing the callback. Use it for programmatic selection (e.g. the `?property=<id>` deep link) so it does not trigger navigation.
-- `fitBounds` padding assumes the list panel is on the **right** — keep the larger padding on `right`.
+## Naming
 
-## Reports
-
-- Listing reports are stored under `localStorage` key `spl-listing-reports` (see `PropertyStore.reportListing` / `listReports` / `resolveReport`). They are per-browser and separate from the validated dataset — do not push them into `data.json` or the repository.
-- The same key is written by the client `app/property/[id]/PropertyActions.tsx`; keep the shape in sync (`id`, `propertyId`, `title`, `reason`, `createdAt`).
-
-## Validation
-
-- Load records through `PropertyStore.initialize()` and validate structure, coordinates, prices, and media URLs before rendering. Remote media URLs are untrusted: HTTP(S) only, no injected HTML.
-
-## Verify
-
-Run `npm run typecheck` and the relevant Vitest file while iterating, then the full suite before completion.
+- Files are kebab-case (`listing-card.tsx`, `use-dataset.ts`). Components are PascalCase exports, hooks start with `use`.
+- One feature folder per surface under `components/`. Do not create `utils.ts` or `helpers.ts` catch-alls; name the module after what it does.

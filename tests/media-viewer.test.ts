@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { MediaViewer, resolveMediaUrl } from '../src/media-viewer';
+import { MediaViewer, resolveMediaUrl } from '@/explorer/media-viewer';
 
 beforeEach(() => {
   document.body.innerHTML = `<div id="media-dialog" hidden><section><button id="close-media">Close</button><h2 id="media-title"></h2><div id="media-stage"></div><p id="media-caption"></p></section></div>`;
