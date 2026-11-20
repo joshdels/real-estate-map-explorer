@@ -8,13 +8,13 @@ A Next.js App Router + TypeScript application for an open-data Philippine land m
 
 | Route | Who it is for | What it does |
 | --- | --- | --- |
-| `/` | Everyone | Brand and positioning, area search, paths for buyers / owners / brokers, recently added listings, suggested listings from the best-reviewed providers, top providers |
-| `/explore` | Buyers | Lot-plan index and map. Filter by region, province, city, price, status, and keyword. Sort by recommended, newest, or price. Each card has **Map**, **Share**, and **Report** |
+| `/` | Everyone | Brand and positioning, area search, paths for buyers / owners / brokers, suggested listings, and top providers |
+| `/explore` | Buyers | Satellite map by default, with a switch to the lot-plan index. Filter by region, province, city, price, status, and keyword. Sort by recommended, newest, or price. Each card has **Share** and **Report** |
 | `/list-property` | Clients and staff | Focused split workspace with the map and approximate lot-boundary drawing on the left and the validated land listing form on the right |
 | `/become-a-provider` | Owners, brokers, and developers | Positions the provider as the expert and links to profile setup and listing creation |
-| `/property/[id]` | Buyers | Lot-plan imagery, lot size, intended land use, terrain, road access, seller and rating, official area, media, mini map, share and report |
-| `/providers`, `/providers/[id]` | Buyers | Providers ordered by rating; a profile shows highlighted listings, listing groups, and reviews (visitors can add or flag a review) |
-| `/dashboard` | Clients | Listing table with status, group, and highlight controls; create and delete groups; edit the public profile; add a listing |
+| `/property/[id]` | Buyers | Lot-plan imagery, lot size, intended land use, terrain, road access, seller and rating, official area, media, mini map, share and report. Opening a lot shows immediate loading progress |
+| `/providers`, `/providers/[id]` | Buyers | Providers ordered by rating; a profile can show an interactive illustrative masterplan, highlighted listings, listing groups, and reviews |
+| `/dashboard` | Clients | Provider portal with a left navigation rail, listing status, group and highlight controls, public profile editing, and listing creation |
 | `/staff` | Admin and employees | Review queue, reported listings and flagged reviews, assisted-listing cases, suspended listings, providers, activity log |
 
 ### How ranking works
@@ -56,6 +56,10 @@ The passcodes are public and stored in session storage. They protect nothing. Re
 - Internet access for Esri tiles and optional remote media
 
 The interface uses the MIT-licensed Phosphor icon family. React surfaces import tree-shakable SVG components from `@phosphor-icons/react`; the imperative MapLibre explorer uses the regular weight from `@phosphor-icons/web`. Both packages are installed by `npm install` and should be updated together with the normal dependency review and verification commands below.
+
+Reusable buttons, loaders, and skeletons use Mantine. Its theme is set in `src/components/ui/app-ui.tsx`, while product colors and motion stay in `src/styles/`. Update `@mantine/core` and `@mantine/hooks` together, then run the full checks below.
+
+The homepage hero uses the generated aerial land image at `public/images/hero-open-lots.webp` under a dark indigo overlay. The explorer shows an animated loading screen until the dataset, area list, and first map render are ready. Property links use the same aerial treatment and progress bar while the lot detail route opens.
 
 ## Development
 

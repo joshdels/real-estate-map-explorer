@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useBoundaryIndex } from "@/hooks/use-boundary-index";
+import { UiButton, UiSpinner } from "@/components/ui/app-ui";
 
 /** Homepage search: picks a location, then opens the explorer with it applied. */
 export function AreaSearch() {
@@ -66,13 +67,13 @@ export function AreaSearch() {
           <option value="sale">Lots for sale</option>
         </select>
       </label>
-      <button className="area-search-submit" type="submit">Search lot plans</button>
+      <UiButton className="area-search-submit" type="submit">Search lots</UiButton>
       <p className="area-search-note" role="status" aria-live="polite">
         {failed
           ? "The location list could not be loaded. You can still search every lot listing."
           : index
             ? `Search across ${index.provinces.length} provinces and ${index.cities.length.toLocaleString("en-PH")} cities and municipalities.`
-            : "Loading locations…"}
+            : <UiSpinner label="Loading locations" />}
       </p>
     </form>
   );

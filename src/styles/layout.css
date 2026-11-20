@@ -16,14 +16,14 @@ body:has(.app-shell) {
 body:has(.app-shell) {
   overflow: hidden;
 }
-.app-shell,
-.map {
+.app-shell {
   width: 100%;
   height: 100%;
   min-height: 100%;
 }
 .app-shell {
   position: relative;
+  --explorer-panel-width: 40vw;
   height: 100dvh;
   min-height: 100dvh;
   isolation: isolate;
@@ -32,9 +32,12 @@ body:has(.app-shell) {
   position: absolute;
   z-index: 0;
   top: 72px;
-  right: 430px;
+  right: var(--explorer-panel-width);
   bottom: 0;
   left: 0;
+  width: auto;
+  height: auto;
+  min-height: 0;
   background: #1f2547;
 }
 .site-header {
@@ -51,7 +54,7 @@ body:has(.app-shell) {
   top: 72px;
   right: 0;
   bottom: 0;
-  width: 430px;
+  width: var(--explorer-panel-width);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -125,13 +128,13 @@ body:has(.app-shell) {
     box-shadow: none;
   }
   body.show-map-view .property-card-button {
-    grid-template-columns: 84px minmax(0, 1fr);
-    gap: 10px;
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 14px;
     padding: 9px 4px;
   }
   body.show-map-view .property-card-media {
-    min-height: 64px;
-    border-radius: 9px;
+    min-height: 124px;
+    border-radius: 12px;
   }
   body.show-map-view .property-card-content {
     padding: 2px 0;
@@ -139,6 +142,31 @@ body:has(.app-shell) {
   body.show-map-view .property-card-facts,
   body.show-map-view .property-card-action {
     display: none;
+  }
+}
+@media (min-width: 1200px) {
+  body.show-map-view .property-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    align-items: stretch;
+  }
+  body.show-map-view .property-card {
+    border: 1px solid #dfe2f3;
+    border-radius: 14px;
+    background: #fff;
+  }
+  body.show-map-view .property-card-button {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: 0;
+  }
+  body.show-map-view .property-card-media {
+    min-height: 160px;
+    aspect-ratio: 16 / 9;
+    border-radius: 0;
+  }
+  body.show-map-view .property-card-content {
+    padding: 14px 14px 10px;
   }
 }
 .details-panel {
@@ -179,7 +207,7 @@ body:has(.app-shell) {
 .listing-workspace-shell .mobile-view-switcher,
 .listing-workspace-shell .agent-card,
 .listing-workspace-shell .view-switch,
-.listing-workspace-shell #nav-list-property {
+.listing-workspace-shell .site-nav > .nav-cta {
   display: none;
 }
 .listing-workspace-shell .map {
@@ -213,6 +241,7 @@ body:has(.app-shell) {
   }
   .map {
     top: 64px;
+    right: 0;
     left: 0;
   }
   body.show-map-view .listing-panel {

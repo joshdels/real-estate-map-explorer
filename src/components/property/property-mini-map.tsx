@@ -41,6 +41,9 @@ export function PropertyMiniMap({
             type: "raster",
             tiles: [TILE_URL],
             tileSize: 256,
+            // Esri coverage varies at closer native levels. Reuse the last
+            // reliable tile instead of requesting its "no data" placeholder.
+            maxzoom: 16,
             attribution: "Imagery &copy; Esri",
           },
         },
@@ -49,7 +52,7 @@ export function PropertyMiniMap({
       center: [lng, lat],
       zoom: 16,
       minZoom: 10,
-      maxZoom: 20,
+      maxZoom: 18,
       attributionControl: { compact: true },
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
@@ -69,7 +72,7 @@ export function PropertyMiniMap({
         });
         map.addLayer({ id: "lot-fill", type: "fill", source: "lot", paint: { "fill-color": "#4f57e3", "fill-opacity": 0.22 } });
         map.addLayer({ id: "lot-line", type: "line", source: "lot", paint: { "line-color": "#6f78f0", "line-width": 2 } });
-        map.fitBounds(bounds(polygon), { padding: 44, maxZoom: 18, duration: 0 });
+        map.fitBounds(bounds(polygon), { padding: 64, maxZoom: 17, duration: 0 });
       }
     });
 

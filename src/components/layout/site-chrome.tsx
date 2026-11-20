@@ -21,10 +21,9 @@ export function SiteHeader({ current }: { current?: "home" | "providers" | "dash
           </span>
         </Link>
         <nav className="page-nav" aria-label="Primary navigation">
-          <a className="site-nav-link" href="/explore">Explore map</a>
-          {link("/providers", "Providers", "providers")}
-          <Link className="site-nav-link" href="/become-a-provider">Become a provider</Link>
-          <a className="nav-cta" href="/list-property">List your lot</a>
+          <a className="site-nav-link" href="/explore">Find Lands</a>
+          {link("/providers", "Trusted Providers", "providers")}
+          <Link className="nav-cta" href="/become-a-provider">Become a Provider</Link>
         </nav>
       </div>
     </header>
@@ -33,7 +32,7 @@ export function SiteHeader({ current }: { current?: "home" | "providers" | "dash
 
 export function SiteFooter() {
   return (
-    <footer className="site-footer">
+    <footer id="site-footer" className="site-footer">
       <div className="site-footer-inner">
         <div className="site-footer-main">
           <section className="site-footer-about" aria-labelledby="footer-brand-name">
@@ -44,30 +43,30 @@ export function SiteFooter() {
                 <small>{brand.tagline}</small>
               </div>
             </div>
-            <p>{brand.positioning}</p>
+            <p>Find land by location. Compare lots on the map. List your land for buyers to see.</p>
           </section>
 
           <nav className="site-footer-group" aria-labelledby="footer-explore-title">
             <h2 id="footer-explore-title">Explore</h2>
             <Link href="/">Home</Link>
-            <a href="/explore">Explore the map</a>
-            <Link href="/providers">Lot sellers</Link>
-            <a href="/list-property">List a lot plan</a>
+            <a href="/explore">Find Lands</a>
+            <Link href="/providers">Trusted Providers</Link>
+            <Link href="/become-a-provider">Become a Provider</Link>
           </nav>
 
           <nav className="site-footer-group" aria-labelledby="footer-manage-title">
-            <h2 id="footer-manage-title">Manage</h2>
-            <Link href="/dashboard">Client dashboard</Link>
-            <Link href="/become-a-provider">Become a provider</Link>
-            <Link href="/staff">Staff console</Link>
-            <a href="/list-property">Create a listing</a>
+            <h2 id="footer-manage-title">For sellers</h2>
+            <Link href="/dashboard">My listings</Link>
+            <a href="/list-property">Provider listing form</a>
+            <Link href="/staff">Staff</Link>
+            <a href="/list-property">Add land</a>
           </nav>
 
         </div>
 
         <div className="site-footer-bottom">
-          <p>© {new Date().getFullYear()} {brand.name}. Built for clearer Philippine land discovery.</p>
-          <p>Sample product. No listing is independently verified. {brand.boundaryCredit}</p>
+          <p>© {new Date().getFullYear()} {brand.name}</p>
+          <p>Sample listings are not verified. {brand.boundaryCredit}</p>
         </div>
       </div>
     </footer>

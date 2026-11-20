@@ -10,9 +10,9 @@ Next.js App Router. Adds to the root and `src/AGENTS.md`. Read `node_modules/nex
 | `/explore` | Map explorer and listing index (list and map views, filters, share, report) and the listing workspace |
 | `/list-property` | Focused split workspace: map boundary drawing beside the property form |
 | `/become-a-provider` | Public provider story and onboarding overview with links to profile setup and listing creation |
-| `/property/[id]` | Listing detail |
+| `/property/[id]` | Listing detail, with a route-level aerial loading fallback |
 | `/providers`, `/providers/[id]` | Provider directory and public profile with groups and reviews |
-| `/dashboard` | Client dashboard: listings, groups, highlights, profile |
+| `/dashboard` | Provider portal with left navigation for listings, groups, highlights, and the public profile |
 | `/staff` | Admin and employee console |
 | `/auth/callback` | Supabase OAuth callback |
 

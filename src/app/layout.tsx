@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import "@mantine/core/styles.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "@phosphor-icons/web/regular";
 import "@/styles/tokens.css";
@@ -7,6 +8,8 @@ import "@/styles/components.css";
 import "@/styles/layout.css";
 import "@/styles/site.css";
 import { brand } from "@/lib/brand";
+import { AppUiProvider } from "@/components/ui/app-ui";
+import { LotNavigationOverlay } from "@/components/ui/lot-loading-screen";
 
 export const metadata: Metadata = {
   title: `${brand.name} — ${brand.tagline}`,
@@ -30,7 +33,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
       </head>
       <body>
-        {children}
+        <AppUiProvider>
+          {children}
+          <LotNavigationOverlay />
+        </AppUiProvider>
         <Script
           src="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.js"
           strategy="beforeInteractive"

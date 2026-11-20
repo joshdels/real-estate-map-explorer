@@ -3,6 +3,16 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
+  ArrowSquareOut,
+  Buildings,
+  House,
+  IdentificationCard,
+  MapPinLine,
+  Plus,
+  SignOut,
+  Stack,
+} from "@phosphor-icons/react";
+import {
   KIND_LABELS,
   areaLabel,
   formatPrice,
@@ -33,64 +43,85 @@ export function ClientDashboard() {
 
   if (!provider)
     return (
-      <section className="page-section" aria-labelledby="client-access-title">
-        <p className="section-kicker">For owners, brokers, and developers</p>
-        <h1 id="client-access-title">Client dashboard</h1>
-        <p className="section-lead">Manage your lot listings, organise them by development, and highlight your best available land.</p>
-        <p className="demo-warning" role="note">
-          Demo access only. Choosing a profile below is not a login and protects nothing. Real accounts need Supabase sign-in with server-side permissions.
-        </p>
-        <div className="panel-columns">
-          <form
-            className="panel-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const id = String(new FormData(event.currentTarget).get("providerId"));
-              const target = data.providers.find((item) => item.id === id);
-              if (target) enter(target);
-            }}
-          >
-            <h2>Open an existing profile</h2>
-            <label>Provider profile
-              <select name="providerId" required>
-                {data.providers.map((item) => (
-                  <option key={item.id} value={item.id}>{item.name} ({KIND_LABELS[item.kind]})</option>
-                ))}
-              </select>
-            </label>
-            <button className="primary-action" type="submit" disabled={!ready || data.providers.length === 0}>Open dashboard</button>
-          </form>
-          <form
-            className="panel-form"
-            onSubmit={async (event) => {
-              event.preventDefault();
-              const values = new FormData(event.currentTarget);
-              const created: Provider = {
-                id: crypto.randomUUID(),
-                name: String(values.get("name")).trim(),
-                kind: String(values.get("kind")) as ProviderKind,
-                serviceArea: String(values.get("serviceArea") ?? "").trim() || undefined,
-                staffReviewed: false,
-                joinedAt: new Date().toISOString(),
-              };
-              await mutate((store) => store.addProvider(created));
-              enter(created);
-            }}
-          >
-            <h2>Create a new profile</h2>
-            <label>Business or owner name<input name="name" required maxLength={120} /></label>
-            <label>I am a
-              <select name="kind" defaultValue="owner">
-                <option value="owner">Land owner</option>
-                <option value="broker">Broker</option>
-                <option value="developer">Developer</option>
-              </select>
-            </label>
-            <label>Service area (optional)<input name="serviceArea" maxLength={120} placeholder="e.g., Cebu" /></label>
-            <button className="primary-action" type="submit" disabled={!ready}>Create profile</button>
-          </form>
+      <div className="provider-portal provider-portal-access">
+        <aside className="provider-sidebar" aria-label="Provider portal introduction">
+          <div className="provider-sidebar-mark" aria-hidden="true"><Buildings /></div>
+          <p className="provider-sidebar-kicker">Provider portal</p>
+          <h2>Keep your land listings in one place.</h2>
+          <p>Manage lots, group developments, and keep your public profile current.</p>
+          <ol className="provider-access-steps" aria-label="Getting started">
+            <li><span>1</span><div><strong>Choose a profile</strong><small>Open a fictional provider workspace.</small></div></li>
+            <li><span>2</span><div><strong>Manage your land</strong><small>Update listings, groups, and highlights.</small></div></li>
+            <li><span>3</span><div><strong>Review your public page</strong><small>See what buyers can discover.</small></div></li>
+          </ol>
+          <a className="provider-sidebar-link" href="/explore"><MapPinLine aria-hidden="true" /> Explore listed land</a>
+        </aside>
+
+        <div className="provider-portal-main">
+          <header className="provider-portal-heading">
+            <p className="section-kicker">For owners, brokers, and developers</p>
+            <h1 id="client-access-title">Open your provider workspace</h1>
+            <p className="section-lead">Choose a sample profile or create one for this browser.</p>
+            <p className="demo-warning" role="note">
+              Demo access only. Choosing a profile is not a login and protects nothing. Do not enter real private information.
+            </p>
+          </header>
+          <section className="provider-access-grid" aria-labelledby="client-access-title">
+            <form
+              className="panel-form provider-access-card"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const id = String(new FormData(event.currentTarget).get("providerId"));
+                const target = data.providers.find((item) => item.id === id);
+                if (target) enter(target);
+              }}
+            >
+              <span className="provider-card-icon" aria-hidden="true"><IdentificationCard /></span>
+              <h2>Open an existing profile</h2>
+              <p>Continue with one of the fictional providers.</p>
+              <label>Provider profile
+                <select name="providerId" required>
+                  {data.providers.map((item) => (
+                    <option key={item.id} value={item.id}>{item.name} ({KIND_LABELS[item.kind]})</option>
+                  ))}
+                </select>
+              </label>
+              <button className="primary-action" type="submit" disabled={!ready || data.providers.length === 0}>Open workspace</button>
+            </form>
+            <form
+              className="panel-form provider-access-card"
+              onSubmit={async (event) => {
+                event.preventDefault();
+                const values = new FormData(event.currentTarget);
+                const created: Provider = {
+                  id: crypto.randomUUID(),
+                  name: String(values.get("name")).trim(),
+                  kind: String(values.get("kind")) as ProviderKind,
+                  serviceArea: String(values.get("serviceArea") ?? "").trim() || undefined,
+                  staffReviewed: false,
+                  joinedAt: new Date().toISOString(),
+                };
+                await mutate((store) => store.addProvider(created));
+                enter(created);
+              }}
+            >
+              <span className="provider-card-icon" aria-hidden="true"><Plus /></span>
+              <h2>Create a sample profile</h2>
+              <p>Set up a local workspace to try the provider tools.</p>
+              <label>Business or owner name<input name="name" required maxLength={120} /></label>
+              <label>I am a
+                <select name="kind" defaultValue="owner">
+                  <option value="owner">Land owner</option>
+                  <option value="broker">Broker</option>
+                  <option value="developer">Developer</option>
+                </select>
+              </label>
+              <label>Service area (optional)<input name="serviceArea" maxLength={120} placeholder="e.g., Cebu" /></label>
+              <button className="primary-action" type="submit" disabled={!ready}>Create profile</button>
+            </form>
+          </section>
         </div>
-      </section>
+      </div>
     );
 
   const listings = data.properties.filter((item) => item.providerId === provider.id);
@@ -104,19 +135,38 @@ export function ClientDashboard() {
   };
 
   return (
-    <>
-      <section className="page-section" aria-labelledby="dashboard-title">
+    <div className="provider-portal">
+      <aside className="provider-sidebar provider-sidebar-dashboard" aria-label="Provider workspace navigation">
+        <div className="provider-identity">
+          <span aria-hidden="true">{provider.name.slice(0, 2).toUpperCase()}</span>
+          <div>
+            <small>{KIND_LABELS[provider.kind]}</small>
+            <strong>{provider.name}</strong>
+          </div>
+        </div>
+        <nav className="provider-sidebar-nav" aria-label="Dashboard sections">
+          <a href="#overview"><House aria-hidden="true" /> Overview</a>
+          <a href="#my-listings"><MapPinLine aria-hidden="true" /> Listings <span>{listings.length}</span></a>
+          <a href="#listing-groups"><Stack aria-hidden="true" /> Groups <span>{groups.length}</span></a>
+          <a href="#public-profile"><IdentificationCard aria-hidden="true" /> Public profile</a>
+        </nav>
+        <div className="provider-sidebar-actions">
+          <a className="provider-sidebar-primary" href="/list-property"><Plus aria-hidden="true" /> Add a listing</a>
+          <Link href={`/providers/${encodeURIComponent(provider.id)}`}><ArrowSquareOut aria-hidden="true" /> View public page</Link>
+          <button type="button" onClick={() => { clearSession(); refreshSession(); }}><SignOut aria-hidden="true" /> Switch profile</button>
+        </div>
+        <p className="provider-demo-note">Demo workspace. Changes stay in this browser when the remote repository is unavailable.</p>
+      </aside>
+
+      <div className="provider-portal-main">
+      <section id="overview" className="dashboard-section dashboard-overview" aria-labelledby="dashboard-title">
         <div className="section-heading">
           <div>
-            <p className="section-kicker">Client dashboard · {KIND_LABELS[provider.kind]}</p>
-            <h1 id="dashboard-title">{provider.name}</h1>
+            <p className="section-kicker">Provider workspace</p>
+            <h1 id="dashboard-title">Welcome back, {provider.name}</h1>
             <p className="section-lead">{formatRating(rating)}. {provider.staffReviewed ? "Profile reviewed by staff." : "Profile not yet reviewed by staff."}</p>
           </div>
-          <div className="heading-actions">
-            <a className="primary-action" href="/list-property"><i className="ph ph-plus" aria-hidden="true" /> Add a listing</a>
-            <Link className="secondary-action" href={`/providers/${encodeURIComponent(provider.id)}`}>View public page</Link>
-            <button className="secondary-action" type="button" onClick={() => { clearSession(); refreshSession(); }}>Switch profile</button>
-          </div>
+          <a className="primary-action dashboard-add-action" href="/list-property"><Plus aria-hidden="true" /> Add a listing</a>
         </div>
         <dl className="stat-row">
           <div><dt>Listings</dt><dd>{listings.length}</dd></div>
@@ -128,7 +178,7 @@ export function ClientDashboard() {
         <p className="form-note" role="status" aria-live="polite">{note}</p>
       </section>
 
-      <section className="page-section" aria-labelledby="my-listings-title">
+      <section id="my-listings" className="dashboard-section" aria-labelledby="my-listings-title">
         <h2 id="my-listings-title">Your listings</h2>
         {listings.length === 0 ? (
           <p className="empty-state">No listings yet. Use “Add a listing” to pin your first lot plan on the map.</p>
@@ -205,7 +255,7 @@ export function ClientDashboard() {
         )}
       </section>
 
-      <section className="page-section page-section-tint" aria-labelledby="groups-title">
+      <section id="listing-groups" className="dashboard-section dashboard-section-soft" aria-labelledby="groups-title">
         <h2 id="groups-title">Listing groups</h2>
         <p className="section-lead">Show related lots together on your public page, such as a subdivision, development site, or project phase.</p>
         <div className="panel-columns">
@@ -250,7 +300,7 @@ export function ClientDashboard() {
         </div>
       </section>
 
-      <section className="page-section" aria-labelledby="profile-edit-title">
+      <section id="public-profile" className="dashboard-section" aria-labelledby="profile-edit-title">
         <h2 id="profile-edit-title">Public profile</h2>
         <form
           className="panel-form"
@@ -271,6 +321,7 @@ export function ClientDashboard() {
           <button className="primary-action" type="submit" disabled={!ready}>Save profile</button>
         </form>
       </section>
-    </>
+      </div>
+    </div>
   );
 }

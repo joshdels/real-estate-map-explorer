@@ -12,6 +12,7 @@ import {
 } from "@/lib/listings";
 import type { Property } from "@/lib/types";
 import { ListingCard, Stars } from "@/components/listings/listing-card";
+import { ProviderMasterplan } from "@/components/providers/provider-masterplan";
 import { useDataset } from "@/hooks/use-dataset";
 
 export function ProvidersDirectory() {
@@ -98,6 +99,10 @@ export function ProviderProfile({ id }: { id: string }) {
           </p>
         </div>
       </section>
+
+      {provider.id === "provider-coastal" && listings.length > 0 ? (
+        <ProviderMasterplan listings={listings} />
+      ) : null}
 
       {featured.length > 0 ? (
         <section className="page-section" aria-labelledby="featured-title">

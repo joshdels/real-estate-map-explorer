@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { DeviceMobile, Drop, Lightning, SealCheck, TelevisionSimple, WifiHigh } from "@phosphor-icons/react";
 import { ListingTools, Stars } from "@/components/listings/listing-card";
 import { useDataset } from "@/hooks/use-dataset";
 import {
@@ -12,6 +13,15 @@ import {
 } from "@/lib/listings";
 import { PropertyMedia } from "@/components/property/property-media";
 import { PropertyMiniMap } from "@/components/property/property-mini-map";
+
+function UtilityIcon({ name }: { name: string }) {
+  const key = name.toLocaleLowerCase();
+  if (key.includes("electric")) return <Lightning aria-hidden="true" />;
+  if (key.includes("water")) return <Drop aria-hidden="true" />;
+  if (key.includes("mobile") || key.includes("cell")) return <DeviceMobile aria-hidden="true" />;
+  if (key.includes("internet") || key.includes("wifi")) return <WifiHigh aria-hidden="true" />;
+  return <TelevisionSimple aria-hidden="true" />;
+}
 
 /**
  * Renders from the seed during server render, then from the live store, so
@@ -42,9 +52,36 @@ export function PropertyView({ id }: { id: string }) {
   const rating = provider ? providerRatings(data.reviews).get(provider.id) : undefined;
   const group = data.groups.find((item) => item.id === property.groupId);
   const area = property.adminArea;
+  const providerInitials = provider?.name
+    .replace(/^Sample\s+/i, "")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <>
+      {provider ? (
+        <section className="detail-provider-banner" aria-labelledby="listed-by-title">
+          <Link
+            className="detail-provider-logo"
+            href={`/providers/${encodeURIComponent(provider.id)}`}
+            aria-label={`View ${provider.name}`}
+          >
+            <span aria-hidden="true">{providerInitials}</span>
+          </Link>
+          <div className="detail-provider-copy">
+            <p className="detail-provider-kicker" id="listed-by-title">Listed by</p>
+            <p className="detail-provider">
+              <Link href={`/providers/${encodeURIComponent(provider.id)}`}>{provider.name}</Link>
+              <Stars rating={rating} />
+            </p>
+            {group ? <p className="detail-note">Part of “{group.name}”.</p> : null}
+          </div>
+          <Link className="detail-provider-link" href={`/providers/${encodeURIComponent(provider.id)}`}>
+            View provider
+          </Link>
+        </section>
+      ) : null}
+
       <div className="detail-page-grid">
         <section className="detail-gallery" aria-label="Lot photos">
           {images.length > 0 ? (
@@ -75,7 +112,13 @@ export function PropertyView({ id }: { id: string }) {
             {area ? ` · ${[area.city, area.province].filter(Boolean).join(", ")}` : ""}
           </p>
           <p className="property-card-badges">
-            <span className="card-badge">{property.review === "reviewed" ? "Staff reviewed" : "Not yet reviewed by staff"}</span>
+            {property.review === "reviewed" ? (
+              <span className="card-badge card-badge-reviewed">
+                <SealCheck aria-hidden="true" /> Staff reviewed
+              </span>
+            ) : (
+              <span className="card-badge">Not yet reviewed by staff</span>
+            )}
             {property.assistedBy ? <span className="card-badge">Assisted listing</span> : null}
           </p>
           <dl className="property-facts">
@@ -93,17 +136,6 @@ export function PropertyView({ id }: { id: string }) {
       </div>
 
       <div className="detail-page-body">
-        {provider ? (
-          <section className="detail-block">
-            <h2>Listed by</h2>
-            <p className="detail-provider">
-              <Link href={`/providers/${encodeURIComponent(provider.id)}`}>{provider.name}</Link>
-              <Stars rating={rating} />
-            </p>
-            {group ? <p className="detail-note">Part of the listing group “{group.name}”.</p> : null}
-          </section>
-        ) : null}
-
         {property.description ? (
           <section className="detail-block">
             <h2>Land details</h2>
@@ -116,7 +148,10 @@ export function PropertyView({ id }: { id: string }) {
             <h2>Utilities available</h2>
             <dl className="detail-utilities">
               {utilities.map(([name, value]) => (
-                <div key={name}><dt>{name}</dt><dd>{value}</dd></div>
+                <div key={name}>
+                  <UtilityIcon name={name} />
+                  <div><dt>{name}</dt><dd>{value}</dd></div>
+                </div>
               ))}
             </dl>
           </section>

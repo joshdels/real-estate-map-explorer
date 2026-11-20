@@ -2,11 +2,11 @@
 export const brand = Object.freeze({
   name: "Open Lot Plans",
   shortName: "OLP",
-  tagline: "Philippine land for sale, clearly mapped",
+  tagline: "Provincial land for sale, clearly mapped",
   positioning:
-    "An open-data marketplace for Philippine lot plans and development land, so buyers can compare locations and sellers can present each available parcel clearly.",
+    "Find open lots for sale across Philippine provinces. Compare land on the map, or list land for buyers to see.",
   sampleNotice:
-    "Every lot plan, seller, review, and price shown is clearly labeled fictional sample data for product testing and must be independently verified.",
+    "All lots, sellers, reviews, and prices are fictional samples. Check all details before making a decision.",
   boundaryCredit:
     "Administrative outlines are simplified and are not legal or surveyed boundaries.",
 });

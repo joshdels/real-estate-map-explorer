@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Flag, MapPin, ShareNetwork, Star } from "@phosphor-icons/react";
+import { Flag, SealCheck, ShareNetwork, Star } from "@phosphor-icons/react";
 import {
-  PURPOSE_LABELS,
-  TYPE_LABELS,
   areaLabel,
   formatPrice,
   type ProviderRating,
@@ -28,7 +26,7 @@ export function Stars({ rating }: { rating?: ProviderRating }) {
 }
 
 /** Share and report controls shared by listing cards and the property page. */
-export function ListingTools({ property, mapLink = true }: { property: Property; mapLink?: boolean }) {
+export function ListingTools({ property }: { property: Property }) {
   const [reporting, setReporting] = useState(false);
   const [reported, setReported] = useState(false);
   const [note, setNote] = useState("");
@@ -43,15 +41,6 @@ export function ListingTools({ property, mapLink = true }: { property: Property;
   return (
     <div className="listing-tools">
       <div className="property-card-tools">
-        {mapLink ? (
-          <a
-            className="card-tool"
-            href={`/explore?property=${encodeURIComponent(property.id)}`}
-            aria-label={`Show on map: ${property.title}`}
-          >
-            <MapPin aria-hidden="true" /> Map
-          </a>
-        ) : null}
         <button
           className="card-tool"
           type="button"
@@ -101,19 +90,19 @@ export function ListingCard({
         <span className="property-card-media">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={image} alt="" loading="lazy" />
-          {!property.media?.images?.[0] ? <span className="lot-plan-sample">Illustrative lot plan</span> : null}
           <span className={`card-status status-${property.status.toLowerCase()}`}>{property.status}</span>
         </span>
         <span className="property-card-content">
-          <span className="property-card-badges">
-            <span className="card-badge">
-              {PURPOSE_LABELS[property.purpose ?? "sale"]} · {TYPE_LABELS[property.propertyType ?? "lot"]}
+          {property.review === "reviewed" || property.featured ? (
+            <span className="property-card-badges">
+              {property.review === "reviewed" ? (
+                <span className="card-badge card-badge-reviewed">
+                  <SealCheck aria-hidden="true" /> Staff reviewed
+                </span>
+              ) : null}
+              {property.featured ? <span className="card-badge card-badge-featured">Provider highlight</span> : null}
             </span>
-            {property.review === "reviewed" ? (
-              <span className="card-badge card-badge-reviewed">Staff reviewed</span>
-            ) : null}
-            {property.featured ? <span className="card-badge card-badge-featured">Provider highlight</span> : null}
-          </span>
+          ) : null}
           <strong className="property-card-price">{formatPrice(property)}</strong>
           <span className="property-card-title">{property.title}</span>
           <span className="property-card-address">{areaLabel(property)}</span>

@@ -18,7 +18,10 @@ A professional real-estate service for the Philippines: property shown on the of
 
 ## Copy rules
 
-- Plain, specific, sentence case. Say what the control does: "Search listings", "Mark reviewed", "Suspend listing".
+- Use short, common words. Remove jargon and extra detail.
+- Keep headings, labels, and buttons brief. Say what happens next: "Find land", "Add photos", "Save listing".
+- Avoid hyphenated terms when a familiar word or short phrase works.
+- Break long sentences into two short ones.
 - No hype ("best", "guaranteed", "verified") and no claim the product cannot back. "Staff reviewed" is not "verified".
 - Keep the sample-data notice and the PSA / NAMRIA credit visible on public pages.
 - Prices through `formatPrice()`; dates in `Asia/Manila`.

@@ -11,6 +11,18 @@ export function MapExplorer({ workspaceMode = false }: { workspaceMode?: boolean
   return (
     <>
   <main className={`app-shell${workspaceMode ? " listing-workspace-shell" : ""}`} aria-label={workspaceMode ? `${brand.name} lot listing workspace` : `${brand.name} map explorer`}>
+    <div id="explorer-loading" className="explorer-loading" role="status" aria-live="polite" aria-label="Loading the map and lot listings">
+      <div className="explorer-loading-card">
+        <div className="loading-map-mark" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+          <i className="ph ph-map-pin" />
+        </div>
+        <p className="eyebrow">Preparing your map</p>
+        <strong>Loading lots and locations</strong>
+        <div className="loading-progress" aria-hidden="true"><span></span></div>
+        <small>This may take a moment.</small>
+      </div>
+    </div>
     <header className="site-header">
       {/* Plain anchors on purpose: src/main.ts attaches once per page load, so
           leaving and re-entering the explorer must be a full navigation. */}
@@ -20,17 +32,17 @@ export function MapExplorer({ workspaceMode = false }: { workspaceMode?: boolean
         <span><strong>{brand.name}</strong><small>{brand.tagline}</small></span>
       </a>
       <nav className="site-nav" aria-label="Primary navigation">
-        <a className="site-nav-link" href="/providers">Providers</a>
-        {/* eslint-enable @next/next/no-html-link-for-pages */}
+        <a className="site-nav-link" href="/providers">Trusted Providers</a>
         <div className="view-switch" role="group" aria-label="Choose how to browse lots">
-          <button id="view-list-button" type="button" className="is-active" aria-pressed="true">
-            <i className="ph ph-list" aria-hidden="true" /> List
-          </button>
-          <button id="view-map-button" type="button" aria-pressed="false">
+          <button id="view-map-button" type="button" className="is-active" aria-pressed="true">
             <i className="ph ph-map-pin" aria-hidden="true" /> Map
           </button>
+          <button id="view-list-button" type="button" aria-pressed="false">
+            <i className="ph ph-list" aria-hidden="true" /> List
+          </button>
         </div>
-        <button id="nav-list-property" className="nav-cta" type="button">List your lot</button>
+        <a className="nav-cta" href="/become-a-provider">Become a Provider</a>
+        {/* eslint-enable @next/next/no-html-link-for-pages */}
       </nav>
     </header>
     <aside id="property-search" className="listing-panel" aria-label="Lot plan listings">
@@ -69,13 +81,13 @@ export function MapExplorer({ workspaceMode = false }: { workspaceMode?: boolean
         <p id="listing-action-note" className="sr-only" role="status" aria-live="polite"></p>
         <div id="property-list" className="property-list" aria-live="polite"></div>
         <p id="property-list-empty" className="property-list-empty" hidden>No lots match this search. Try another place or filter.</p>
-        <p className="sample-disclosure">{brand.sampleNotice} {brand.boundaryCredit}</p>
+        <p className="sample-disclosure">{brand.sampleNotice} {brand.boundaryCredit} Satellite imagery © Esri.</p>
       </section>
     </aside>
     <div id="map" className="map" aria-label="Interactive satellite map of available lots"></div>
     <div className="mobile-view-switcher" aria-label="Choose lot view">
-      <button id="show-list-button" type="button" aria-pressed="true"><i className="ph ph-list" aria-hidden="true" /> List</button>
-      <button id="show-map-button" type="button" aria-pressed="false"><i className="ph ph-map-pin" aria-hidden="true" /> Map</button>
+      <button id="show-map-button" type="button" aria-pressed="true"><i className="ph ph-map-pin" aria-hidden="true" /> Map</button>
+      <button id="show-list-button" type="button" aria-pressed="false"><i className="ph ph-list" aria-hidden="true" /> List</button>
     </div>
     <section className="agent-card" aria-label="Land specialist">
       <div className="agent-heading"><span id="agent-initials" className="avatar" aria-hidden="true">EC</span><span><strong id="agent-name">Eric Costuna</strong><small id="agent-role">Property Specialist</small></span></div>

@@ -9,8 +9,6 @@ import { PropertyStore } from "@/lib/store";
 import type { Feature } from "geojson";
 import { boundaries, type BoundaryIndex } from "@/lib/geo/boundaries";
 import {
-  PURPOSE_LABELS,
-  TYPE_LABELS,
   areaLabel,
   filterListings,
   formatPrice,
@@ -28,6 +26,7 @@ let initialization: Promise<void> | undefined;
 export function initializeApp(): Promise<void> {
   initialization ??= start().catch((error: unknown) => {
     console.error(error);
+    finishLoading();
     const status = qs<HTMLElement>("#app-status");
     status.hidden = false;
     status.textContent =
@@ -67,13 +66,12 @@ async function start(): Promise<void> {
   listingPortal.current = setupListingPortal(
     map,
     store.snapshot(),
-    () => admin.requestAccess(),
     (property, reason) =>
       void store.reportListing(property.id, reason, property.title),
   );
   details.onClose = () => map.clearSelection();
   const query = new URLSearchParams(location.search);
-  if (query.get("view") === "map") listingPortal.current.showMap();
+  if (query.get("view") !== "list") listingPortal.current.showMap();
   if (query.has("workspace") || location.pathname === "/list-property") {
     listingPortal.current.showMap();
     admin.requestAccess();
@@ -91,6 +89,8 @@ async function start(): Promise<void> {
       map.focus(match);
     }
   }
+  await Promise.all([map.whenReady(), listingPortal.current.areaReady]);
+  finishLoading();
   window.addEventListener("keydown", (event) => {
     if (event.key === "ArrowLeft" && !qs<HTMLElement>("#media-dialog").hidden)
       media.nextGallery(-1);
@@ -112,7 +112,6 @@ async function start(): Promise<void> {
 function setupListingPortal(
   map: MapController,
   initialData: Dataset,
-  onListProperty: () => void,
   onReport: (property: Property, reason: string) => void,
 ) {
   const list = qs<HTMLElement>("#property-list");
@@ -194,11 +193,6 @@ function setupListingPortal(
         propertyCard(property, {
           provider: providers.get(property.providerId ?? ""),
           rating: ratings.get(property.providerId ?? ""),
-          onShowOnMap: () => {
-            showView("map");
-            select(property.id);
-            requestAnimationFrame(() => map.focus(property));
-          },
           onShare: async () => {
             note.textContent = await shareListing(
               property.id,
@@ -331,7 +325,6 @@ function setupListingPortal(
   qs("#show-map-button").addEventListener("click", () => showView("map"));
   qs("#view-list-button").addEventListener("click", () => showView("list"));
   qs("#view-map-button").addEventListener("click", () => showView("map"));
-  qs("#nav-list-property").addEventListener("click", onListProperty);
   const scrollToCard = (propertyId: string) => {
     const card = list.querySelector<HTMLElement>(
       `[data-property-id="${CSS.escape(propertyId)}"]`,
@@ -349,7 +342,7 @@ function setupListingPortal(
   pendingFrame = () => map.showAll();
 
   areaStatus.textContent = "Loading official area list…";
-  boundaries
+  const areaReady = boundaries
     .index()
     .then((loaded) => {
       index = loaded;
@@ -381,6 +374,7 @@ function setupListingPortal(
     scrollToCard,
     showMap: () => showView("map"),
     showList: () => showView("list"),
+    areaReady,
     /** Replaces any queued framing, e.g. when a deep link focuses one listing. */
     cancelPendingFrame: () => {
       pendingFrame = undefined;
@@ -388,10 +382,19 @@ function setupListingPortal(
   };
 }
 
+function finishLoading(): void {
+  const loading = document.querySelector<HTMLElement>("#explorer-loading");
+  if (!loading || loading.classList.contains("is-leaving")) return;
+  loading.classList.add("is-leaving");
+  loading.setAttribute("aria-hidden", "true");
+  window.setTimeout(() => {
+    loading.hidden = true;
+  }, 320);
+}
+
 interface CardOptions {
   provider?: Provider;
   rating?: ProviderRating;
-  onShowOnMap: () => void;
   onShare: () => void | Promise<void>;
   onReport: (reason: string) => void;
 }
@@ -421,23 +424,21 @@ function propertyCard(property: Property, options: CardOptions): HTMLElement {
   image.alt = "";
   image.loading = "lazy";
   media.append(image);
-  if (!property.media?.images?.[0])
-    media.append(el("span", "lot-plan-sample", "Illustrative lot plan"));
   media.append(
     el("span", `card-status status-${property.status.toLocaleLowerCase()}`, property.status),
   );
 
   const content = el("span", "property-card-content");
   const badges = el("span", "property-card-badges");
-  badges.append(
-    el("span", "card-badge", `${PURPOSE_LABELS[property.purpose ?? "sale"]} · ${TYPE_LABELS[property.propertyType ?? "lot"]}`),
-  );
-  if (property.review === "reviewed")
-    badges.append(el("span", "card-badge card-badge-reviewed", "Staff reviewed"));
+  if (property.review === "reviewed") {
+    const reviewed = el("span", "card-badge card-badge-reviewed");
+    reviewed.append(phosphorIcon("seal-check"), document.createTextNode("Staff reviewed"));
+    badges.append(reviewed);
+  }
   if (property.assistedBy)
     badges.append(el("span", "card-badge", "Assisted listing"));
+  if (badges.childElementCount > 0) content.append(badges);
   content.append(
-    badges,
     el("strong", "property-card-price", formatPrice(property)),
     el("span", "property-card-title", property.title),
     el("span", "property-card-address", areaLabel(property)),
@@ -462,8 +463,6 @@ function propertyCard(property: Property, options: CardOptions): HTMLElement {
     button.append(phosphorIcon(iconName), document.createTextNode(label));
     return button;
   };
-  const mapButton = toolButton("map-pin", "Map", "Show on map");
-  mapButton.addEventListener("click", options.onShowOnMap);
   const shareButton = toolButton("share-network", "Share", "Share listing");
   shareButton.addEventListener("click", () => void options.onShare());
   const reportButton = toolButton("flag", "Report", "Report listing");
@@ -488,7 +487,7 @@ function propertyCard(property: Property, options: CardOptions): HTMLElement {
     reasons.hidden = !reasons.hidden;
     reportButton.setAttribute("aria-expanded", String(!reasons.hidden));
   });
-  tools.append(mapButton, shareButton, reportButton);
+  tools.append(shareButton, reportButton);
   card.append(link, tools, reasons);
   return card;
 }

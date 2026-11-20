@@ -8,7 +8,6 @@ import {
   providerRatings,
   publicListings,
   rankedProviders,
-  recentListings,
   suggestedListings,
 } from "@/lib/listings";
 import type { Property } from "@/lib/types";
@@ -52,39 +51,28 @@ export function HomePage() {
       </section>
 
       <section className="page-section" aria-labelledby="audience-title">
-        <p className="section-kicker">Built for every side of the sale</p>
-        <h2 id="audience-title">Where do you fit in?</h2>
+        <p className="section-kicker">Made for land sales</p>
+        <h2 id="audience-title">What do you want to do?</h2>
         <div className="lane-grid">
           <article className="lane">
             <MapTrifold className="lane-icon" aria-hidden="true" />
             <h3>Buyers</h3>
-            <p>Search by region, province, and city, then check each lot outline, road access, and nearby landmarks on satellite imagery before you travel.</p>
+            <p>Choose a place. Compare lot size, price, roads, and nearby places before you visit.</p>
             <a className="lane-link" href="/explore">Explore the map <ArrowRight aria-hidden="true" /></a>
           </article>
           <article className="lane">
             <MapPinLine className="lane-icon" aria-hidden="true" />
             <h3>Owners and sellers</h3>
-            <p>Mark your lot boundary on the map, add land details and photos, then publish. Our staff can help prepare the listing when you need support.</p>
+            <p>Mark your lot on the map. Add the price, details, and photos. Publish when ready.</p>
             <a className="lane-link" href="/list-property">List your land <ArrowRight aria-hidden="true" /></a>
           </article>
           <article className="lane">
             <Buildings className="lane-icon" aria-hidden="true" />
             <h3>Brokers and developers</h3>
-            <p>Group lots by project, highlight your best land listings, and earn buyer reviews that move your listings up the recommended results.</p>
-            <Link className="lane-link" href="/become-a-provider">Become a provider <ArrowRight aria-hidden="true" /></Link>
+            <p>Group lots, feature key listings, and build trust through buyer reviews.</p>
+            <Link className="lane-link" href="/become-a-provider">Become a Provider <ArrowRight aria-hidden="true" /></Link>
           </article>
         </div>
-      </section>
-
-      <section className="page-section" aria-labelledby="recent-title">
-        <div className="section-heading">
-          <div>
-            <p className="section-kicker">Fresh on the map</p>
-            <h2 id="recent-title">Recently added</h2>
-          </div>
-          <a className="section-link" href="/explore?sort=newest">See all new listings <ArrowRight aria-hidden="true" /></a>
-        </div>
-        {cards(recentListings(data, 3))}
       </section>
 
       <section className="page-section page-section-tint" aria-labelledby="suggested-title">
@@ -92,7 +80,7 @@ export function HomePage() {
           <div>
             <p className="section-kicker">Suggested for you</p>
             <h2 id="suggested-title">From our best-reviewed providers</h2>
-            <p className="section-lead">Ranked by buyer reviews of the provider. A provider needs several strong reviews to rank first, so one rating cannot game the list.</p>
+            <p className="section-lead">Based on buyer reviews. Several good reviews matter more than one rating.</p>
           </div>
           <a className="section-link" href="/explore">See all recommended <ArrowRight aria-hidden="true" /></a>
         </div>

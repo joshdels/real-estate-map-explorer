@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { SealCheck } from "@phosphor-icons/react";
 import { KIND_LABELS, areaLabel, formatPrice } from "@/lib/listings";
 import {
   ASSISTED_STATUS_LABELS,
@@ -348,7 +349,7 @@ export function StaffConsole() {
                   <div className="work-actions">
                     {allowed("review-provider") ? (
                       <button className="toggle-button" type="button" aria-pressed={item.staffReviewed} onClick={() => void act(`${item.name} ${item.staffReviewed ? "is no longer marked" : "marked"} as staff reviewed.`, (store) => store.updateProvider(item.id, { staffReviewed: !item.staffReviewed }))}>
-                        {item.staffReviewed ? "✓ Staff reviewed" : "Mark staff reviewed"}
+                        {item.staffReviewed ? <><SealCheck aria-hidden="true" /> Staff reviewed</> : "Mark staff reviewed"}
                       </button>
                     ) : null}
                   </div>

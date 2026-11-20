@@ -81,6 +81,7 @@ The primary workflow is: choose an area, explore map results, refine filters, se
 - **Lot Layout** toggles calculated edge lengths and perimeter. These are geodesic estimates, never surveyed values.
 - Persist through the configured repository, falling back to `localStorage` when Supabase is unavailable or rejects a write. Never rewrite `public/data/data.json` from the browser.
 - Missing media keeps its action disabled; it must not open an empty viewer.
+- Opening a lot detail page shows the shared aerial loading screen and progress bar immediately, including links created by the explorer.
 
 ## UX and accessibility
 

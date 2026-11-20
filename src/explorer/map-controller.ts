@@ -8,6 +8,7 @@ import type {
 import type { Feature, FeatureCollection } from "geojson";
 import { config } from "@/explorer/config";
 import { phosphorIcon } from "@/explorer/dom";
+import { formatPrice } from "@/lib/listings";
 import type { Coordinate, Dataset, DestinationType, Property } from "@/lib/types";
 
 const SOURCE_IDS = {
@@ -21,6 +22,7 @@ maplibregl.setWorkerUrl("/maplibre-gl-worker.mjs");
 
 export class MapController {
   private readonly map: maplibregl.Map;
+  private readonly readyPromise: Promise<void>;
   private readonly markers = new Map<string, maplibregl.Marker>();
   private readonly destinationMarkers: maplibregl.Marker[] = [];
   private readonly measurementMarkers: maplibregl.Marker[] = [];
@@ -49,12 +51,19 @@ export class MapController {
     });
     this.map.addControl(
       new maplibregl.NavigationControl({ showCompass: false }),
-      "bottom-right",
+      "top-right",
     );
-    this.map.addControl(
-      new maplibregl.AttributionControl({ compact: true }),
-      "bottom-right",
-    );
+    this.readyPromise = new Promise((resolve) => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(fallback);
+        resolve();
+      };
+      const fallback = window.setTimeout(finish, 8_000);
+      this.map.once("idle", finish);
+    });
     this.map.on("load", () => {
       this.loaded = true;
       this.addOverlaySources();
@@ -64,6 +73,11 @@ export class MapController {
     this.map.on("click", (event: MapMouseEvent) =>
       this.mapClickHandler?.([event.lngLat.lat, event.lngLat.lng]),
     );
+  }
+
+  /** Resolves after the base map has finished its first render and tile requests. */
+  whenReady(): Promise<void> {
+    return this.readyPromise;
   }
 
   invalidateSize(): void {
@@ -109,7 +123,7 @@ export class MapController {
     this.map.fitBounds(coordinateBounds(property.polygon), {
       padding:
         innerWidth > 900
-          ? { top: 40, right: 470, bottom: 40, left: 60 }
+          ? { top: 60, right: 60, bottom: 60, left: 60 }
           : { top: 30, right: 30, bottom: 260, left: 30 },
       maxZoom: 18,
       duration: reducedMotion() ? 0 : 700,
@@ -140,7 +154,7 @@ export class MapController {
       this.map.fitBounds(coordinateBounds(coords), {
         padding:
           innerWidth > 900
-            ? { top: 80, right: 510, bottom: 80, left: 80 }
+            ? { top: 80, right: 80, bottom: 80, left: 80 }
             : 80,
         maxZoom: config.zoom,
         duration: reducedMotion() ? 0 : 700,
@@ -442,9 +456,16 @@ function lotMarker(property: Property): HTMLButtonElement {
   button.className = "lot-label";
   button.title = `${property.title}, ${property.status}`;
   button.setAttribute("aria-label", `View ${property.title}, ${property.status}`);
-  const span = document.createElement("span");
-  span.textContent = property.title;
-  button.append(span);
+  const summary = document.createElement("span");
+  summary.className = "lot-label-summary";
+  const price = document.createElement("span");
+  price.className = "lot-label-fact lot-label-price";
+  price.append(phosphorIcon("tag"), document.createTextNode(formatPrice(property)));
+  const area = document.createElement("span");
+  area.className = "lot-label-fact";
+  area.append(phosphorIcon("ruler"), document.createTextNode(property.area));
+  summary.append(price, area);
+  button.append(summary);
   return button;
 }
 

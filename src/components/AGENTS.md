@@ -8,6 +8,8 @@ Adds to the root and `src/AGENTS.md`.
 - `listings/` — `ListingCard`, `ListingTools` (share / report), `Stars`, `AreaSearch`.
 - `home/`, `providers/`, `property/`, `dashboard/`, `staff/` — one surface each.
 - `explorer/map-explorer.tsx` — static markup for the map explorer. Behavior is attached by `src/explorer/`.
+- `ui/lot-loading-screen.tsx` — shared lot-route loading screen and click feedback for property links.
+- The provider dashboard uses a left portal rail on wide screens and a compact horizontal section navigator on smaller screens.
 
 ## Rules
 
@@ -19,7 +21,7 @@ Adds to the root and `src/AGENTS.md`.
 - Every interactive element needs an accessible name; icon-only or repeated buttons get `aria-label` including the listing title. Status messages go in a `role="status"` region.
 - No inline styles. Use classes from `src/styles/` and tokens from `tokens.css`.
 - Label sample and user-entered data as unverified. "Staff reviewed" never means verified.
-- Keep interface and marketing copy ready for buyers and property providers. Use plain benefits and direct actions, avoid technical or government jargon outside required credits, and do not use em dashes or en dashes.
+- Use short, familiar words. Remove jargon, extra detail, and avoidable hyphens. Keep buttons and headings brief. Avoid technical or government terms outside required credits. Do not use em dashes or en dashes.
 - Use named, tree-shakable components from `@phosphor-icons/react` for UI icons. Default to regular weight and `currentColor`; use CSS classes and design tokens for size/color rather than inline styles. Do not use emoji or Unicode symbols as interface icons.
 - Decorative icons beside text get `aria-hidden="true"`. An icon-only button still needs a precise `aria-label`. Keep a visible label for actions whose icon is not universally understood.
 
