@@ -1,14 +1,14 @@
 {
   "metadata": {
-    "name": "Smart Property Listing sample dataset",
-    "version": 2,
+    "name": "Open Lot Plans sample dataset",
+    "version": 3,
     "isSample": true,
-    "notice": "Property records, providers, reviews, prices, coordinates, boundaries, routes, and availability are fictional sample content and must be verified."
+    "notice": "Lot plans, sellers, reviews, prices, coordinates, boundaries, routes, and availability are fictional sample content and must be verified."
   },
   "agent": {
     "initials": "EC",
     "name": "Eric Costuna",
-    "role": "Property Specialist",
+    "role": "Land Specialist",
     "phoneDisplay": "0928 535 4832",
     "phoneHref": "+639285354832",
     "messengerUrl": "https://www.messenger.com/"
@@ -66,6 +66,9 @@
       "measurements": "25m × 20m",
       "status": "Available",
       "description": "Fictional residential lot with sample road access, a level building area, and nearby reference destinations.",
+      "landUse": "Residential development",
+      "terrain": "Level",
+      "roadAccess": "Paved local road along the south boundary",
       "utilities": {
         "Electricity": "Eastern Regional Electric",
         "Water": "Municipal Water, Deepwell",
@@ -78,9 +81,7 @@
         "aerialVideoUrl": "https://www.youtube.com/watch?v=M7lc1UVf-VE",
         "walkthroughVideoUrl": "https://www.youtube.com/watch?v=M7lc1UVf-VE",
         "images": [
-          "/images/sample-property-exterior.png",
-          "/images/sample-property-living-room.png",
-          "/images/sample-property-kitchen.png"
+          "/images/sample-aerial-lot-plan.webp"
         ]
       },
       "purpose": "sale",
@@ -130,6 +131,9 @@
       "measurements": "21m × 20m",
       "status": "Available",
       "description": "Fictional corner lot intended to showcase property selection, dimensions, media, and routes.",
+      "landUse": "Residential development",
+      "terrain": "Level",
+      "roadAccess": "Two-sided local road frontage",
       "utilities": {
         "Electricity": "Eastern Regional Electric",
         "Water": "Municipal Water",
@@ -189,6 +193,9 @@
       "measurements": "18m × 20m",
       "status": "Reserved",
       "description": "Fictional riverside listing used to test reserved-property styling and route overlays.",
+      "landUse": "Low-density development",
+      "terrain": "Gently sloping",
+      "roadAccess": "Local road access near the east boundary",
       "utilities": {
         "Electricity": "Solar-ready",
         "Water": "Deepwell",
@@ -248,6 +255,9 @@
       "measurements": "25m × 25m",
       "status": "Available",
       "description": "Large fictional square lot created to showcase a different area and perimeter configuration.",
+      "landUse": "Residential or mixed use",
+      "terrain": "Level",
+      "roadAccess": "Paved road frontage",
       "utilities": {
         "Electricity": "Eastern Regional Electric",
         "Water": "Municipal Water",
@@ -307,6 +317,9 @@
       "measurements": "22.5m × 20m",
       "status": "Sold",
       "description": "Fictional sold listing used to test historical availability and comparison behavior.",
+      "landUse": "Residential development",
+      "terrain": "Level",
+      "roadAccess": "Local road frontage",
       "utilities": {
         "Electricity": "Eastern Regional Electric",
         "Water": "Municipal Water",
@@ -336,7 +349,7 @@
     },
     {
       "id": "property-006",
-      "title": "Sample Uptown Studio 12A",
+      "title": "Sample Uptown Development Lot 12A",
       "address": "Sample Lahug Road",
       "coordinates": [
         10.334,
@@ -360,10 +373,13 @@
           123.898977
         ]
       ],
-      "area": "28 sqm",
+      "area": "280 sqm",
       "price": 4800000,
       "status": "Available",
-      "description": "Fictional studio unit used to demonstrate condominium listings in Cebu City.",
+      "description": "Fictional urban development lot with sample road access and nearby utility connections in Cebu City.",
+      "landUse": "Urban infill development",
+      "terrain": "Level",
+      "roadAccess": "Paved city road frontage",
       "utilities": {
         "Electricity": "Sample Electric Cooperative",
         "Water": "Municipal Water",
@@ -371,15 +387,9 @@
         "Internet": "Sample Broadband",
         "Cable": "Not specified"
       },
-      "media": {
-        "images": [
-          "/images/sample-property-exterior.png",
-          "/images/sample-property-living-room.png",
-          "/images/sample-property-kitchen.png"
-        ]
-      },
+      "media": {},
       "purpose": "sale",
-      "propertyType": "condo",
+      "propertyType": "lot",
       "providerId": "provider-visayas",
       "featured": true,
       "createdAt": "2026-10-18T01:00:00Z",
@@ -396,7 +406,7 @@
     },
     {
       "id": "property-007",
-      "title": "Sample Uptown 1BR 7C",
+      "title": "Sample Uptown Corner Lot 7C",
       "address": "Sample Lahug Road",
       "coordinates": [
         10.3344,
@@ -420,10 +430,13 @@
           123.899373
         ]
       ],
-      "area": "42 sqm",
-      "price": 28000,
+      "area": "420 sqm",
+      "price": 7200000,
       "status": "Available",
-      "description": "Fictional one-bedroom rental used to demonstrate monthly pricing.",
+      "description": "Fictional corner lot for sale with sample frontage and access for future development.",
+      "landUse": "Urban residential development",
+      "terrain": "Level",
+      "roadAccess": "Corner frontage on two paved roads",
       "utilities": {
         "Electricity": "Sample Electric Cooperative",
         "Water": "Municipal Water",
@@ -431,14 +444,9 @@
         "Internet": "Sample Broadband",
         "Cable": "Not specified"
       },
-      "media": {
-        "images": [
-          "/images/sample-property-living-room.png",
-          "/images/sample-property-kitchen.png"
-        ]
-      },
-      "purpose": "rent",
-      "propertyType": "condo",
+      "media": {},
+      "purpose": "sale",
+      "propertyType": "lot",
       "providerId": "provider-visayas",
       "featured": false,
       "createdAt": "2026-11-02T01:00:00Z",
@@ -455,7 +463,7 @@
     },
     {
       "id": "property-008",
-      "title": "Sample Mandurriao House",
+      "title": "Sample Mandurriao Corner Lot",
       "address": "Sample Diversion Road",
       "coordinates": [
         10.718,
@@ -479,10 +487,13 @@
           122.544945
         ]
       ],
-      "area": "180 sqm lot · 120 sqm floor",
-      "price": 5200000,
+      "area": "180 sqm",
+      "price": 2700000,
       "status": "Available",
-      "description": "Fictional three-bedroom house and lot in Iloilo City.",
+      "description": "Fictional residential corner lot with sample road frontage and access to utilities in Iloilo City.",
+      "landUse": "Residential development",
+      "terrain": "Level",
+      "roadAccess": "Corner lot with paved frontage",
       "utilities": {
         "Electricity": "Sample Electric Cooperative",
         "Water": "Municipal Water",
@@ -490,15 +501,9 @@
         "Internet": "Sample Broadband",
         "Cable": "Not specified"
       },
-      "media": {
-        "images": [
-          "/images/sample-property-exterior.png",
-          "/images/sample-property-living-room.png",
-          "/images/sample-property-kitchen.png"
-        ]
-      },
+      "media": {},
       "purpose": "sale",
-      "propertyType": "house",
+      "propertyType": "lot",
       "providerId": "provider-visayas",
       "featured": false,
       "createdAt": "2026-09-22T01:00:00Z",
@@ -514,7 +519,7 @@
     },
     {
       "id": "property-009",
-      "title": "Sample Buhangin Family Home",
+      "title": "Sample Buhangin Residential Lot",
       "address": "Sample Buhangin Street",
       "coordinates": [
         7.113,
@@ -538,10 +543,13 @@
           125.622937
         ]
       ],
-      "area": "250 sqm lot · 160 sqm floor",
-      "price": 6500000,
+      "area": "250 sqm",
+      "price": 3250000,
       "status": "Available",
-      "description": "Fictional family home used to demonstrate house listings in Davao City.",
+      "description": "Fictional residential lot with sample neighborhood road access and nearby utility connections in Davao City.",
+      "landUse": "Residential development",
+      "terrain": "Level to gently sloping",
+      "roadAccess": "Neighborhood road frontage",
       "utilities": {
         "Electricity": "Sample Electric Cooperative",
         "Water": "Municipal Water",
@@ -549,15 +557,9 @@
         "Internet": "Sample Broadband",
         "Cable": "Not specified"
       },
-      "media": {
-        "images": [
-          "/images/sample-property-exterior.png",
-          "/images/sample-property-living-room.png",
-          "/images/sample-property-kitchen.png"
-        ]
-      },
+      "media": {},
       "purpose": "sale",
-      "propertyType": "house",
+      "propertyType": "lot",
       "providerId": "provider-coastal",
       "featured": true,
       "createdAt": "2026-11-08T01:00:00Z",
@@ -601,6 +603,9 @@
       "price": 3900000,
       "status": "Available",
       "description": "Fictional cool-climate residential lot in Tagaytay.",
+      "landUse": "Residential or leisure development",
+      "terrain": "Gently sloping",
+      "roadAccess": "Paved ridge road access",
       "utilities": {
         "Electricity": "Sample Electric Cooperative",
         "Water": "Municipal Water",
@@ -655,6 +660,9 @@
       "price": 3400000,
       "status": "Reserved",
       "description": "Fictional reserved lot beside Ridge Lot 8.",
+      "landUse": "Residential or leisure development",
+      "terrain": "Sloping",
+      "roadAccess": "Shared paved ridge road",
       "utilities": {
         "Electricity": "Sample Electric Cooperative",
         "Water": "Municipal Water",
@@ -681,7 +689,7 @@
     },
     {
       "id": "property-012",
-      "title": "Sample Alfonso Farm Lot",
+      "title": "Sample Alfonso Agricultural Land",
       "address": "Sample Farm Road",
       "coordinates": [
         14.138,
@@ -708,7 +716,10 @@
       "area": "3,000 sqm",
       "price": 2400000,
       "status": "Available",
-      "description": "Fictional agricultural lot used to demonstrate farm listings.",
+      "description": "Fictional agricultural land offered as an open area for future farm development.",
+      "landUse": "Agricultural development",
+      "terrain": "Rolling",
+      "roadAccess": "Farm road frontage",
       "utilities": {
         "Electricity": "Sample Electric Cooperative",
         "Water": "Municipal Water",
@@ -718,7 +729,7 @@
       },
       "media": {},
       "purpose": "sale",
-      "propertyType": "farm",
+      "propertyType": "lot",
       "providerId": "provider-highland",
       "featured": false,
       "createdAt": "2026-09-05T01:00:00Z",
@@ -734,7 +745,7 @@
     },
     {
       "id": "property-013",
-      "title": "Sample Baguio Pine House",
+      "title": "Sample Baguio Pine Lot",
       "address": "Sample Pine Street",
       "coordinates": [
         16.402,
@@ -758,10 +769,13 @@
           120.595944
         ]
       ],
-      "area": "160 sqm lot · 140 sqm floor",
-      "price": 8900000,
+      "area": "160 sqm",
+      "price": 4800000,
       "status": "Available",
-      "description": "Fictional house used to demonstrate listings in Baguio City.",
+      "description": "Fictional sloping residential lot with sample pine surroundings and local road access in Baguio City.",
+      "landUse": "Hillside residential development",
+      "terrain": "Sloping",
+      "roadAccess": "Local mountain road frontage",
       "utilities": {
         "Electricity": "Sample Electric Cooperative",
         "Water": "Municipal Water",
@@ -769,13 +783,9 @@
         "Internet": "Sample Broadband",
         "Cable": "Not specified"
       },
-      "media": {
-        "images": [
-          "/images/sample-property-exterior.png"
-        ]
-      },
+      "media": {},
       "purpose": "sale",
-      "propertyType": "house",
+      "propertyType": "lot",
       "providerId": "provider-highland",
       "featured": false,
       "createdAt": "2026-11-10T01:00:00Z",
@@ -791,7 +801,7 @@
     },
     {
       "id": "property-014",
-      "title": "Sample QC 2BR Unit 15F",
+      "title": "Sample Quezon City Development Lot",
       "address": "Sample Avenue",
       "coordinates": [
         14.65,
@@ -815,10 +825,13 @@
           121.049968
         ]
       ],
-      "area": "58 sqm",
-      "price": 35000,
+      "area": "580 sqm",
+      "price": 14500000,
       "status": "Available",
-      "description": "Fictional two-bedroom rental in Quezon City.",
+      "description": "Fictional open development site with sample city-road access in Quezon City.",
+      "landUse": "Urban mixed-use development",
+      "terrain": "Level",
+      "roadAccess": "Paved city road frontage",
       "utilities": {
         "Electricity": "Sample Electric Cooperative",
         "Water": "Municipal Water",
@@ -826,14 +839,9 @@
         "Internet": "Sample Broadband",
         "Cable": "Not specified"
       },
-      "media": {
-        "images": [
-          "/images/sample-property-living-room.png",
-          "/images/sample-property-kitchen.png"
-        ]
-      },
-      "purpose": "rent",
-      "propertyType": "condo",
+      "media": {},
+      "purpose": "sale",
+      "propertyType": "lot",
       "providerId": "provider-metro",
       "featured": true,
       "createdAt": "2026-11-06T01:00:00Z",
@@ -849,7 +857,7 @@
     },
     {
       "id": "property-015",
-      "title": "Sample Makati Office Floor",
+      "title": "Sample Makati Commercial Lot",
       "address": "Sample Business Street",
       "coordinates": [
         14.556,
@@ -876,7 +884,10 @@
       "area": "600 sqm",
       "price": 18000000,
       "status": "Available",
-      "description": "Fictional office floor used to demonstrate commercial listings.",
+      "description": "Fictional commercial development lot with sample business-district access in Makati.",
+      "landUse": "Commercial development",
+      "terrain": "Level",
+      "roadAccess": "Business-district road frontage",
       "utilities": {
         "Electricity": "Sample Electric Cooperative",
         "Water": "Municipal Water",
@@ -886,7 +897,7 @@
       },
       "media": {},
       "purpose": "sale",
-      "propertyType": "commercial",
+      "propertyType": "lot",
       "providerId": "provider-metro",
       "featured": false,
       "createdAt": "2026-08-28T01:00:00Z",
@@ -930,6 +941,9 @@
       "price": 1600000,
       "status": "Available",
       "description": "Fictional owner-listed lot entered with staff assistance.",
+      "landUse": "Residential development",
+      "terrain": "Level to gently sloping",
+      "roadAccess": "National road connection nearby",
       "utilities": {
         "Electricity": "Sample Electric Cooperative",
         "Water": "Municipal Water",
@@ -984,6 +998,9 @@
       "price": 950000,
       "status": "Available",
       "description": "Fictional residential lot in Borongan, Eastern Samar.",
+      "landUse": "Residential development",
+      "terrain": "Level",
+      "roadAccess": "Barangay road frontage",
       "utilities": {
         "Electricity": "Sample Electric Cooperative",
         "Water": "Municipal Water",
@@ -1106,7 +1123,7 @@
       "id": "provider-visayas",
       "name": "Sample Visayas Homes",
       "kind": "developer",
-      "tagline": "Fictional developer of mid-rise homes in Cebu and Iloilo.",
+      "tagline": "Fictional developer offering mapped lots in Cebu and Iloilo.",
       "serviceArea": "Cebu and Iloilo",
       "staffReviewed": true,
       "joinedAt": "2026-04-18T02:00:00Z"
@@ -1115,7 +1132,7 @@
       "id": "provider-metro",
       "name": "Sample Metro Brokers",
       "kind": "broker",
-      "tagline": "Fictional brokerage for condominiums and offices in Metro Manila.",
+      "tagline": "Fictional brokerage for urban development land in Metro Manila.",
       "serviceArea": "Metro Manila",
       "staffReviewed": false,
       "joinedAt": "2026-06-02T02:00:00Z"
@@ -1149,8 +1166,8 @@
     {
       "id": "group-cebu-uptown",
       "providerId": "provider-visayas",
-      "name": "Cebu Uptown Residences (sample)",
-      "description": "Fictional mid-rise units for sale and for rent."
+      "name": "Cebu Uptown Lots (sample)",
+      "description": "Fictional group of urban lots for future development."
     },
     {
       "id": "group-ridge",

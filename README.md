@@ -1,6 +1,6 @@
-# Smart Property Listing
+# Open Lot Plans
 
-A Next.js App Router + TypeScript application for a Philippine real-estate service: property for sale or rent shown on a satellite map and searchable by official PSA / NAMRIA region, province, and city. Providers (owners, brokers, developers) manage and group their listings, buyers rate providers, and staff review listings and handle reports.
+A Next.js App Router + TypeScript application for an open-data Philippine land marketplace: lot plans and open areas for development offered for sale on a satellite map and searchable by official PSA / NAMRIA region, province, and city. Sellers (owners, brokers, developers) manage and group their lot listings, buyers rate sellers, and staff review listings and handle reports.
 
 > Bundled listings, providers, reviews, boundaries, prices, routes, availability, contact details, and media are fictional and unverified. Boundary dimensions are geodesic estimates, not surveys. Administrative outlines are simplified and are not legal boundaries. The role system is a local demo, not authentication.
 
@@ -9,10 +9,10 @@ A Next.js App Router + TypeScript application for a Philippine real-estate servi
 | Route | Who it is for | What it does |
 | --- | --- | --- |
 | `/` | Everyone | Brand and positioning, area search, paths for buyers / owners / brokers, recently added listings, suggested listings from the best-reviewed providers, top providers |
-| `/explore` | Buyers | Listing index and map. Filter by region, province, city, sale or rent, property type, price, status, keyword. Sort by recommended, newest, or price. Each card has **Map**, **Share**, and **Report** |
-| `/list-property` | Clients and staff | Focused split workspace with the map and boundary drawing on the left and the validated property form on the right |
+| `/explore` | Buyers | Lot-plan index and map. Filter by region, province, city, price, status, and keyword. Sort by recommended, newest, or price. Each card has **Map**, **Share**, and **Report** |
+| `/list-property` | Clients and staff | Focused split workspace with the map and approximate lot-boundary drawing on the left and the validated land listing form on the right |
 | `/become-a-provider` | Owners, brokers, and developers | Positions the provider as the expert and links to profile setup and listing creation |
-| `/property/[id]` | Buyers | Photos, facts, provider and rating, official area, media, mini map, share and report |
+| `/property/[id]` | Buyers | Lot-plan imagery, lot size, intended land use, terrain, road access, seller and rating, official area, media, mini map, share and report |
 | `/providers`, `/providers/[id]` | Buyers | Providers ordered by rating; a profile shows highlighted listings, listing groups, and reviews (visitors can add or flag a review) |
 | `/dashboard` | Clients | Listing table with status, group, and highlight controls; create and delete groups; edit the public profile; add a listing |
 | `/staff` | Admin and employees | Review queue, reported listings and flagged reviews, assisted-listing cases, suspended listings, providers, activity log |

@@ -4,14 +4,14 @@ Shared instructions for every coding agent (Claude Code, Codex/GPT, and others).
 
 ## Mission
 
-**Smart Property Listing** is a professional real-estate service for the Philippines. It showcases houses, lots, condos, farms, and commercial property for sale or rent on a satellite map tied to official PSA / NAMRIA boundaries, so the public can find and judge a property quickly and providers (owners, brokers, developers) sell faster.
+**Open Lot Plans** is an open-data land marketplace for the Philippines. It showcases lot plans and open areas for development that are offered for sale on a satellite map tied to official PSA / NAMRIA boundaries, so buyers can compare land clearly and sellers (owners, brokers, developers) can reach them faster. It does not market houses, condominiums, finished units, or rentals.
 
 Three audiences, each with a clear path:
 
 | Audience | Goal | Surface |
 | --- | --- | --- |
-| Buyers and renters | Find a property in a known area and trust what they see | `/`, `/explore`, `/property/[id]`, `/providers` |
-| Clients (providers) | List, group, highlight, and sell their properties | `/dashboard`, `/list-property` |
+| Land buyers | Find a lot or open development area in a known place and understand the available information | `/`, `/explore`, `/property/[id]`, `/providers` |
+| Clients (sellers) | List, group, highlight, and sell their lot plans and development land | `/dashboard`, `/list-property` |
 | Staff (admin, employee) | Keep listings accurate: review, flags, assisted listings | `/staff` |
 
 All bundled listings, providers, reviews, and prices are fictional samples. Never describe sample data, simplified boundaries, or a "staff reviewed" badge as verified.
@@ -41,7 +41,7 @@ docs/             Architecture and business planning
 
 When requirements are incomplete, optimize in this order:
 
-1. Accurate property and location information.
+1. Accurate land, lot-plan, and location information.
 2. Fast map exploration and understandable filters.
 3. Clear comparison between visible properties.
 4. Responsive and accessible interaction.
@@ -73,7 +73,7 @@ The primary workflow is: choose an area, explore map results, refine filters, se
 
 ## Explorer and workspace behavior
 
-- The header **List your property** button opens `/list-property`, a dedicated split workspace with the drawing map on the left and the listing form on the right. It opens the access dialog first when no session exists.
+- The header **List your lot** button opens `/list-property`, a dedicated split workspace with the drawing map on the left and the lot listing form on the right. It opens the access dialog first when no session exists.
 - The workspace manages properties, utility defaults, routes, destinations, and local reports.
 - Boundary pinning requires at least three finite latitude/longitude points before a property can be saved.
 - New properties, routes, and destinations appear on the public map without a reload.

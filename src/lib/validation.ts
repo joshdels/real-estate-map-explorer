@@ -203,6 +203,9 @@ export function validateDataset(value: unknown): Dataset {
     property.createdAt = isoDate(property.createdAt);
     property.adminArea = sanitizeAdminArea(property.adminArea);
     property.assistedBy = cleanText(property.assistedBy, 60) || undefined;
+    property.landUse = cleanText(property.landUse, 80) || undefined;
+    property.terrain = cleanText(property.terrain, 80) || undefined;
+    property.roadAccess = cleanText(property.roadAccess, 120) || undefined;
     if (!property.providerId || !providerIds.has(property.providerId))
       property.providerId = undefined;
     // A listing may only sit in a group that belongs to its own provider.

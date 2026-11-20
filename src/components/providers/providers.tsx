@@ -19,10 +19,10 @@ export function ProvidersDirectory() {
   const ranked = rankedProviders(data);
   return (
     <section className="page-section" aria-labelledby="directory-title">
-      <p className="section-kicker">Our clients</p>
-      <h1 id="directory-title">Property providers</h1>
-      <p className="section-lead">Owners, brokers, and developers who list with us, ordered by buyer reviews. Ratings come from visitor reviews and are not a licence check.</p>
-      {ranked.length === 0 ? <p className="empty-state">No providers have joined yet.</p> : null}
+      <p className="section-kicker">Land sellers</p>
+      <h1 id="directory-title">Owners, brokers, and developers</h1>
+      <p className="section-lead">People and businesses offering lot plans and open development land, ordered by buyer reviews. Ratings come from visitor reviews and are not a licence check.</p>
+      {ranked.length === 0 ? <p className="empty-state">No land sellers have joined yet.</p> : null}
       <div className="provider-grid">
         {ranked.map(({ provider, rating, listings }) => (
           <Link key={provider.id} className="provider-card" href={`/providers/${encodeURIComponent(provider.id)}`}>
@@ -101,7 +101,7 @@ export function ProviderProfile({ id }: { id: string }) {
 
       {featured.length > 0 ? (
         <section className="page-section" aria-labelledby="featured-title">
-          <h2 id="featured-title">Highlighted by this provider</h2>
+          <h2 id="featured-title">Highlighted by this seller</h2>
           {cards(featured)}
         </section>
       ) : null}
@@ -111,7 +111,7 @@ export function ProviderProfile({ id }: { id: string }) {
         if (members.length === 0) return null;
         return (
           <section key={group.id} className="page-section" aria-labelledby={`group-${group.id}`}>
-            <p className="section-kicker">Listing group · {members.length} {members.length === 1 ? "property" : "properties"}</p>
+            <p className="section-kicker">Lot group · {members.length} {members.length === 1 ? "lot" : "lots"}</p>
             <h2 id={`group-${group.id}`}>{group.name}</h2>
             {group.description ? <p className="section-lead">{group.description}</p> : null}
             {cards(members)}
@@ -121,11 +121,11 @@ export function ProviderProfile({ id }: { id: string }) {
 
       {ungrouped.length > 0 ? (
         <section className="page-section" aria-labelledby="other-title">
-          <h2 id="other-title">{groups.length > 0 ? "Other listings" : "Listings"}</h2>
+          <h2 id="other-title">{groups.length > 0 ? "Other lots" : "Lots for sale"}</h2>
           {cards(ungrouped)}
         </section>
       ) : null}
-      {listings.length === 0 ? <p className="page-section empty-state">This provider has no public listings right now.</p> : null}
+      {listings.length === 0 ? <p className="page-section empty-state">This seller has no public lot listings right now.</p> : null}
 
       <section className="page-section page-section-tint" aria-labelledby="reviews-title">
         <h2 id="reviews-title">Reviews</h2>

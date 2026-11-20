@@ -5,7 +5,7 @@ import { brand } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: `Become a provider | ${brand.name}`,
-  description: "Present and manage mapped property listings with a provider profile.",
+  description: "Present and manage mapped lot plans and development land with a seller profile.",
 };
 
 export default function BecomeProviderPage() {

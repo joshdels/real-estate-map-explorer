@@ -21,11 +21,11 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { id } = await params;
   const property = findSeedProperty(id);
   // Listings created in the browser are not known to the server.
-  if (!property) return { title: `Property listing — ${brand.name}` };
+  if (!property) return { title: `Lot listing — ${brand.name}` };
   const title = `${property.title} — ${formatPrice(property)} | ${brand.name}`;
   const description =
     property.description ||
-    `${property.area} ${property.status} property at ${property.address}. Sample listing on ${brand.name}.`;
+    `${property.area} ${property.status} lot for sale at ${property.address}. Sample lot plan on ${brand.name}.`;
   const image = property.media?.images?.[0];
   const url = `${SITE_URL}/property/${property.id}`;
   return {
@@ -56,7 +56,7 @@ export default async function PropertyPage({ params }: Params) {
     <main className="detail-page" id="top">
       <header className="detail-page-bar">
         <a className="detail-back" href="/explore">
-          <i className="ph ph-arrow-left" aria-hidden="true" /> All properties
+          <i className="ph ph-arrow-left" aria-hidden="true" /> All lots
         </a>
         <span className="detail-brand">{brand.name}</span>
       </header>

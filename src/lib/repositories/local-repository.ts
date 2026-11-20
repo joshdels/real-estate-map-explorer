@@ -3,7 +3,7 @@ import { validateDataset } from "@/lib/validation";
 import seedData from "../../../public/data/data.json";
 
 // Bump the version whenever the seed changes shape so stale overrides are ignored.
-export const STORAGE_KEY = "real-estate-map-explorer.data.v7";
+export const STORAGE_KEY = "real-estate-map-explorer.data.v8";
 
 export class LocalRepository implements DataRepository {
   readonly source = "local" as const;

@@ -14,7 +14,7 @@ export function AreaSearch() {
   const cities = province ? (index?.cities.filter((item) => item.province === province) ?? []) : [];
 
   return (
-    <form className="area-search" action="/explore" method="get" aria-label="Search listings by area">
+    <form className="area-search" action="/explore" method="get" aria-label="Search lot plans by area">
       <label>
         <span>Region</span>
         <select
@@ -60,17 +60,16 @@ export function AreaSearch() {
         </select>
       </label>
       <label>
-        <span>Looking to</span>
+        <span>Looking for</span>
         <select name="purpose" defaultValue="">
-          <option value="">Buy or rent</option>
-          <option value="sale">Buy</option>
-          <option value="rent">Rent</option>
+          <option value="">Land for sale</option>
+          <option value="sale">Lots for sale</option>
         </select>
       </label>
-      <button className="area-search-submit" type="submit">Search listings</button>
+      <button className="area-search-submit" type="submit">Search lot plans</button>
       <p className="area-search-note" role="status" aria-live="polite">
         {failed
-          ? "The location list could not be loaded. You can still search every listing."
+          ? "The location list could not be loaded. You can still search every lot listing."
           : index
             ? `Search across ${index.provinces.length} provinces and ${index.cities.length.toLocaleString("en-PH")} cities and municipalities.`
             : "Loading locations…"}

@@ -79,5 +79,5 @@ export function PropertyMiniMap({
     };
   }, [coordinates, polygon]);
 
-  return <div ref={ref} className="detail-minimap-interactive" aria-label="Interactive property location map" />;
+  return <div ref={ref} className="detail-minimap-interactive" aria-label="Interactive lot plan location map" />;
 }

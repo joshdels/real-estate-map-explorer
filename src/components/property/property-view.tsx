@@ -34,7 +34,8 @@ export function PropertyView({ id }: { id: string }) {
       </section>
     );
 
-  const images = property.media?.images?.filter(Boolean) ?? [];
+  const suppliedImages = property.media?.images?.filter(Boolean) ?? [];
+  const images = suppliedImages.length > 0 ? suppliedImages : ["/images/sample-aerial-lot-plan.webp"];
   const mapHref = `/explore?property=${encodeURIComponent(property.id)}`;
   const utilities = Object.entries(property.utilities ?? {});
   const provider = data.providers.find((item) => item.id === property.providerId);
@@ -45,7 +46,7 @@ export function PropertyView({ id }: { id: string }) {
   return (
     <>
       <div className="detail-page-grid">
-        <section className="detail-gallery" aria-label="Property photos">
+        <section className="detail-gallery" aria-label="Lot photos">
           {images.length > 0 ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -59,9 +60,8 @@ export function PropertyView({ id }: { id: string }) {
                 </div>
               ) : null}
             </>
-          ) : (
-            <div className="detail-gallery-empty">No photos supplied yet</div>
-          )}
+          ) : null}
+          {suppliedImages.length === 0 ? <p className="detail-gallery-disclosure">Illustrative sample lot plan. Not a surveyed plan or photo of this listing.</p> : null}
         </section>
 
         <aside className="detail-summary">
@@ -83,6 +83,9 @@ export function PropertyView({ id }: { id: string }) {
             <div><dt>Price</dt><dd>{formatPrice(property)}</dd></div>
             <div><dt>Measurements</dt><dd>{property.measurements || "Not specified"}</dd></div>
             <div><dt>Status</dt><dd><span className="status-pill">{property.status}</span></dd></div>
+            <div><dt>Land use</dt><dd>{property.landUse || "Open development land"}</dd></div>
+            <div><dt>Terrain</dt><dd>{property.terrain || "Confirm with seller"}</dd></div>
+            <div><dt>Road access</dt><dd>{property.roadAccess || property.address}</dd></div>
           </dl>
           <ListingTools property={property} />
           <PropertyMedia title={property.title} media={property.media ?? {}} mapHref={mapHref} />
@@ -103,7 +106,7 @@ export function PropertyView({ id }: { id: string }) {
 
         {property.description ? (
           <section className="detail-block">
-            <h2>Description</h2>
+            <h2>Land details</h2>
             <p>{property.description}</p>
           </section>
         ) : null}
@@ -129,8 +132,8 @@ export function PropertyView({ id }: { id: string }) {
           ) : null}
           <PropertyMiniMap coordinates={property.coordinates} polygon={property.polygon} />
           <p className="detail-note">
-            Approximate satellite location — not a surveyed boundary. This is a
-            clearly labeled fictional sample listing and must be independently
+            Approximate lot plan and satellite location. This is open listing data,
+            not a surveyed boundary. This fictional sample must be independently
             verified.
           </p>
         </section>

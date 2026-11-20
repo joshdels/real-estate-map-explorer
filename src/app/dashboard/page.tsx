@@ -5,7 +5,7 @@ import { brand } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: `Client dashboard — ${brand.name}`,
-  description: "Manage listings, listing groups, and highlighted properties.",
+  description: "Manage lot listings, development groups, and highlighted land for sale.",
   robots: { index: false },
 };
 

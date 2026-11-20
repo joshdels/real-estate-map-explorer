@@ -67,7 +67,7 @@ export class MediaViewer {
     this.title.textContent = request.title;
     this.caption.textContent = request.isExample
       ? "Sample media placeholder. Verify and replace before production use."
-      : "Property media supplied by the listing source.";
+      : "Land media supplied by the listing source.";
     this.backdrop.hidden = false;
     if (request.type === "gallery")
       this.openGallery(request.urls ?? [], request.title);
@@ -98,7 +98,7 @@ export class MediaViewer {
     this.galleryUrls = urls.filter(validMediaUrl);
     this.galleryIndex = 0;
     if (!this.galleryUrls.length) {
-      this.stage.textContent = "No valid property images are available.";
+      this.stage.textContent = "No valid lot images are available.";
       return;
     }
     this.showGalleryImage(0, title);
@@ -106,7 +106,7 @@ export class MediaViewer {
 
   private showGalleryImage(
     index: number,
-    title = this.title.textContent ?? "Property image",
+    title = this.title.textContent ?? "Lot image",
   ): void {
     if (!this.galleryUrls.length) return;
     this.galleryIndex =

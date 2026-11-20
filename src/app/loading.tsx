@@ -1,7 +1,7 @@
 export default function Loading() {
   return (
     <main className="fatal-message" role="status" aria-live="polite">
-      Loading the property map…
+      Loading the lot plan map…
     </main>
   );
 }

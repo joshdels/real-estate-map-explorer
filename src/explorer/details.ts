@@ -1,6 +1,7 @@
 import { mediaActions, type MediaAction } from '@/explorer/config';
 import { phosphorIcon, qs } from '@/explorer/dom';
 import type { MediaRequest, Property } from '@/lib/types';
+import { brand } from '@/lib/brand';
 
 export class DetailsPanel {
   readonly panel = qs<HTMLElement>('#details-panel');
@@ -33,7 +34,9 @@ export class DetailsPanel {
   open(property: Property, onRoute: () => boolean, onLayout: () => boolean, onMedia: (request: MediaRequest) => void, onViewMap: () => void, onReport: (property: Property, reason: string) => void): void {
     const values: Record<string, string> = { '#property-title': property.title, '#property-address': property.address, '#property-area': property.area,
       '#property-price': new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 }).format(property.price),
-      '#property-measurements': property.measurements || 'Not specified', '#property-status': property.status, '#property-description': property.description || 'No description supplied.' };
+      '#property-measurements': property.measurements || 'Not specified', '#property-status': property.status,
+      '#property-land-use': property.landUse || 'Open development land', '#property-terrain': property.terrain || 'Confirm with seller',
+      '#property-road-access': property.roadAccess || property.address, '#property-description': property.description || 'No description supplied.' };
     Object.entries(values).forEach(([selector, value]) => { qs<HTMLElement>(selector).textContent = value; });
     qs<HTMLElement>('#collapsed-property-title').textContent = property.title;
     qs<HTMLElement>('#property-utilities').replaceChildren(...Object.entries(property.utilities || {}).map(([name, value]) => row(name, value)));
@@ -95,10 +98,10 @@ export class DetailsPanel {
 
   private shareProperty(property: Property): void {
     const url = `${location.origin}/property/${encodeURIComponent(property.id)}`;
-    const title = `${property.title} — Smart Property Listing`;
+    const title = `${property.title} — ${brand.name}`;
     if (navigator.share) {
       void navigator
-        .share({ title, text: property.address, url })
+        .share({ title, text: `Lot for sale at ${property.address}`, url })
         .then(() => this.note('Share sheet opened.'))
         .catch(() => this.openFacebookShare(url));
       return;
@@ -115,11 +118,11 @@ export class DetailsPanel {
     }
     void navigator.clipboard
       ?.writeText(url)
-      .then(() => this.note('Pop-up blocked — property link copied to clipboard instead.'))
+      .then(() => this.note('Pop-up blocked. The lot listing link was copied instead.'))
       .catch(() => this.note(`Copy this link to share: ${url}`));
   }
 
-  setCollapsed(collapsed: boolean): void { this.panel.classList.toggle('is-collapsed', collapsed); this.toggleButton.setAttribute('aria-expanded', String(!collapsed)); this.toggleButton.setAttribute('aria-label', collapsed ? 'Expand property details' : 'Collapse property details'); this.scroller.inert = collapsed; }
+  setCollapsed(collapsed: boolean): void { this.panel.classList.toggle('is-collapsed', collapsed); this.toggleButton.setAttribute('aria-expanded', String(!collapsed)); this.toggleButton.setAttribute('aria-label', collapsed ? 'Expand lot details' : 'Collapse lot details'); this.scroller.inert = collapsed; }
   close(): void { if (!this.panel.classList.contains('is-open')) return; this.panel.classList.remove('is-open'); this.panel.setAttribute('aria-hidden', 'true'); this.setCollapsed(false); this.onClose(); }
 }
 

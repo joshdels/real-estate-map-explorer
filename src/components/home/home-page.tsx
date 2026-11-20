@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Buildings, HouseLine, MapTrifold } from "@phosphor-icons/react";
+import { ArrowRight, Buildings, MapPinLine, MapTrifold } from "@phosphor-icons/react";
 import { brand } from "@/lib/brand";
 import {
   KIND_LABELS,
@@ -40,7 +40,7 @@ export function HomePage() {
     <>
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero-inner">
-          <h1 id="hero-title">Find the property. See <span className="hero-title-accent">exactly where</span> it stands.</h1>
+          <h1 id="hero-title">Find land for sale. See <span className="hero-title-accent">exactly where</span> it lies.</h1>
           <p className="hero-lead">{brand.positioning}</p>
           <AreaSearch />
           <dl className="hero-stats">
@@ -62,15 +62,15 @@ export function HomePage() {
             <a className="lane-link" href="/explore">Explore the map <ArrowRight aria-hidden="true" /></a>
           </article>
           <article className="lane">
-            <HouseLine className="lane-icon" aria-hidden="true" />
+            <MapPinLine className="lane-icon" aria-hidden="true" />
             <h3>Owners and sellers</h3>
-            <p>Place your property on the map, add photos, and publish. Our staff can help prepare the listing when you need support.</p>
-            <a className="lane-link" href="/list-property">List your property <ArrowRight aria-hidden="true" /></a>
+            <p>Mark your lot boundary on the map, add land details and photos, then publish. Our staff can help prepare the listing when you need support.</p>
+            <a className="lane-link" href="/list-property">List your land <ArrowRight aria-hidden="true" /></a>
           </article>
           <article className="lane">
             <Buildings className="lane-icon" aria-hidden="true" />
             <h3>Brokers and developers</h3>
-            <p>Group listings by project, highlight your best properties, and earn buyer reviews that move your listings up the recommended results.</p>
+            <p>Group lots by project, highlight your best land listings, and earn buyer reviews that move your listings up the recommended results.</p>
             <Link className="lane-link" href="/become-a-provider">Become a provider <ArrowRight aria-hidden="true" /></Link>
           </article>
         </div>
@@ -122,23 +122,23 @@ export function HomePage() {
 
       <section className="page-section brand-story" aria-labelledby="brand-story-title">
         <div className="brand-story-copy">
-          <p className="section-kicker">You bring the property. We help buyers see it.</p>
+          <p className="section-kicker">You bring the land. We help buyers understand it.</p>
           <h2 id="brand-story-title">Your experience leads the way</h2>
-          <p>Owners, brokers, and developers know their properties and the buyers they want to serve. That knowledge is the heart of every useful listing.</p>
-          <p>Smart Property Listing is your guide. We give you the map, presentation tools, and support to make each property easier to find and understand while you stay in control.</p>
+          <p>Owners, brokers, and developers know their land and the buyers they want to serve. That knowledge is the heart of every useful listing.</p>
+          <p>{brand.name} gives you the map, presentation tools, and support to make each parcel easier to find and understand while you stay in control.</p>
           <div className="brand-story-actions">
-            <a className="brand-story-primary" href="/explore">Find a property <ArrowRight aria-hidden="true" /></a>
-            <a className="brand-story-secondary" href="/list-property">Present your property</a>
+            <a className="brand-story-primary" href="/explore">Find land for sale <ArrowRight aria-hidden="true" /></a>
+            <a className="brand-story-secondary" href="/list-property">Present your land</a>
           </div>
         </div>
         <div className="brand-story-principles" aria-label="What guides the service">
           <article>
             <span aria-hidden="true">01</span>
-            <div><h3>Your property leads</h3><p>You decide what to present and keep the information current.</p></div>
+            <div><h3>Your land leads</h3><p>You decide what to present and keep the information current.</p></div>
           </article>
           <article>
             <span aria-hidden="true">02</span>
-            <div><h3>We make it visible</h3><p>Clear maps, photos, prices, and details help buyers notice the right property.</p></div>
+            <div><h3>We make it visible</h3><p>Clear boundaries, photos, prices, and details help buyers notice the right lot.</p></div>
           </article>
           <article>
             <span aria-hidden="true">03</span>
@@ -148,13 +148,13 @@ export function HomePage() {
       </section>
 
       <section className="page-section service-band" aria-labelledby="service-title">
-        <p className="section-kicker">Built for buyers and property providers</p>
-        <h2 id="service-title">Everything needed to find, present, and manage a property</h2>
+        <p className="section-kicker">Built for land buyers and sellers</p>
+        <h2 id="service-title">Everything needed to find, present, and manage land for sale</h2>
         <ol className="service-steps">
-          <li><strong>Easy to find by location</strong><span>Buyers can search by region, province, and city, then see each property on the map.</span></li>
-          <li><strong>Clear details for buyers</strong><span>Show the price, lot shape, photos, videos, nearby places, and useful routes in one listing.</span></li>
-          <li><strong>Simple tools for providers</strong><span>Create listings, organize properties, update their status, and feature the ones you want buyers to notice.</span></li>
-          <li><strong>Support when you need it</strong><span>Our staff can help prepare a listing and review reports so property information stays useful.</span></li>
+          <li><strong>Easy to find by location</strong><span>Buyers can search by region, province, and city, then see each available lot on the map.</span></li>
+          <li><strong>Clear land details</strong><span>Show the price, lot area, shape, road access, utilities, photos, nearby places, and useful routes in one listing.</span></li>
+          <li><strong>Simple tools for sellers</strong><span>Create listings, organize lots, update their status, and feature the land you want buyers to notice.</span></li>
+          <li><strong>Support when you need it</strong><span>Our staff can help prepare a listing and review reports so land information stays useful.</span></li>
         </ol>
       </section>
 

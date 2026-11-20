@@ -215,7 +215,7 @@ function setupListingPortal(
     );
     // Keep the map in step with the list: only matching listings get markers.
     map.render({ ...data, properties });
-    count.textContent = `${properties.length} ${properties.length === 1 ? "property" : "properties"}`;
+    count.textContent = `${properties.length} ${properties.length === 1 ? "lot" : "lots"}`;
     empty.hidden = properties.length > 0;
   };
 
@@ -415,17 +415,14 @@ function propertyCard(property: Property, options: CardOptions): HTMLElement {
   link.setAttribute("aria-label", `View details for ${property.title}`);
 
   const media = el("span", "property-card-media");
-  const imageUrl = property.media?.images?.[0];
-  if (imageUrl) {
-    const image = document.createElement("img");
-    image.src = imageUrl;
-    image.alt = "";
-    image.loading = "lazy";
-    media.append(image);
-  } else {
-    const placeholder = phosphorIcon("house-line", "property-card-placeholder");
-    media.append(placeholder);
-  }
+  const imageUrl = property.media?.images?.[0] ?? "/images/sample-aerial-lot-plan.webp";
+  const image = document.createElement("img");
+  image.src = imageUrl;
+  image.alt = "";
+  image.loading = "lazy";
+  media.append(image);
+  if (!property.media?.images?.[0])
+    media.append(el("span", "lot-plan-sample", "Illustrative lot plan"));
   media.append(
     el("span", `card-status status-${property.status.toLocaleLowerCase()}`, property.status),
   );
@@ -444,7 +441,8 @@ function propertyCard(property: Property, options: CardOptions): HTMLElement {
     el("strong", "property-card-price", formatPrice(property)),
     el("span", "property-card-title", property.title),
     el("span", "property-card-address", areaLabel(property)),
-    el("span", "property-card-facts", `${property.area}${property.measurements ? ` · ${property.measurements}` : ""}`),
+    el("span", "property-card-facts", `Lot size ${property.area}${property.measurements ? ` · ${property.measurements}` : ""}`),
+    el("span", "property-card-land-use", property.landUse ?? "Open development land"),
   );
   if (options.provider)
     content.append(

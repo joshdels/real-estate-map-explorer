@@ -40,7 +40,7 @@ export const TYPE_LABELS: Record<PropertyType, string> = {
   commercial: "Commercial",
 };
 export const KIND_LABELS: Record<Provider["kind"], string> = {
-  owner: "Property owner",
+  owner: "Land owner",
   broker: "Broker",
   developer: "Developer",
 };

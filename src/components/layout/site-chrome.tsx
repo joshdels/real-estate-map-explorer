@@ -24,7 +24,7 @@ export function SiteHeader({ current }: { current?: "home" | "providers" | "dash
           <a className="site-nav-link" href="/explore">Explore map</a>
           {link("/providers", "Providers", "providers")}
           <Link className="site-nav-link" href="/become-a-provider">Become a provider</Link>
-          <a className="nav-cta" href="/list-property">List your property</a>
+          <a className="nav-cta" href="/list-property">List your lot</a>
         </nav>
       </div>
     </header>
@@ -51,8 +51,8 @@ export function SiteFooter() {
             <h2 id="footer-explore-title">Explore</h2>
             <Link href="/">Home</Link>
             <a href="/explore">Explore the map</a>
-            <Link href="/providers">Property providers</Link>
-            <a href="/list-property">List a property</a>
+            <Link href="/providers">Lot sellers</Link>
+            <a href="/list-property">List a lot plan</a>
           </nav>
 
           <nav className="site-footer-group" aria-labelledby="footer-manage-title">
@@ -66,7 +66,7 @@ export function SiteFooter() {
         </div>
 
         <div className="site-footer-bottom">
-          <p>© {new Date().getFullYear()} {brand.name}. Built for clearer Philippine property discovery.</p>
+          <p>© {new Date().getFullYear()} {brand.name}. Built for clearer Philippine land discovery.</p>
           <p>Sample product. No listing is independently verified. {brand.boundaryCredit}</p>
         </div>
       </div>

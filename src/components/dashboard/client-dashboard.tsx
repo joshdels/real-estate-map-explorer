@@ -36,7 +36,7 @@ export function ClientDashboard() {
       <section className="page-section" aria-labelledby="client-access-title">
         <p className="section-kicker">For owners, brokers, and developers</p>
         <h1 id="client-access-title">Client dashboard</h1>
-        <p className="section-lead">Manage your listings, organise them into groups, and highlight your best properties.</p>
+        <p className="section-lead">Manage your lot listings, organise them by development, and highlight your best available land.</p>
         <p className="demo-warning" role="note">
           Demo access only. Choosing a profile below is not a login and protects nothing. Real accounts need Supabase sign-in with server-side permissions.
         </p>
@@ -81,7 +81,7 @@ export function ClientDashboard() {
             <label>Business or owner name<input name="name" required maxLength={120} /></label>
             <label>I am a
               <select name="kind" defaultValue="owner">
-                <option value="owner">Property owner</option>
+                <option value="owner">Land owner</option>
                 <option value="broker">Broker</option>
                 <option value="developer">Developer</option>
               </select>
@@ -131,7 +131,7 @@ export function ClientDashboard() {
       <section className="page-section" aria-labelledby="my-listings-title">
         <h2 id="my-listings-title">Your listings</h2>
         {listings.length === 0 ? (
-          <p className="empty-state">No listings yet. Use “Add a listing” to pin your first property on the map.</p>
+          <p className="empty-state">No listings yet. Use “Add a listing” to pin your first lot plan on the map.</p>
         ) : (
           <div className="table-scroll">
             <table className="data-table">
@@ -207,7 +207,7 @@ export function ClientDashboard() {
 
       <section className="page-section page-section-tint" aria-labelledby="groups-title">
         <h2 id="groups-title">Listing groups</h2>
-        <p className="section-lead">Show related properties together on your public page — a subdivision, a building, or a project phase.</p>
+        <p className="section-lead">Show related lots together on your public page, such as a subdivision, development site, or project phase.</p>
         <div className="panel-columns">
           <ul className="group-list">
             {groups.length === 0 ? <li className="empty-state">No groups yet.</li> : null}

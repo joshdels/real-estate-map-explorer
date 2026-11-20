@@ -188,7 +188,7 @@ export function PropertyMedia({
           <section className="media-dialog" role="dialog" aria-modal="true" aria-label={`${title} — ${popup.label}`}>
             <header>
               <div>
-                <span className="panel-kicker">Property media</span>
+                <span className="panel-kicker">Lot media</span>
                 <h2>{popup.label}</h2>
               </div>
               <button type="button" onClick={close} aria-label="Close media viewer">

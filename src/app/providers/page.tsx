@@ -4,8 +4,8 @@ import { SiteFooter, SiteHeader } from "@/components/layout/site-chrome";
 import { brand } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: `Property providers — ${brand.name}`,
-  description: "Owners, brokers, and developers listing on the platform, ordered by buyer reviews.",
+  title: `Lot sellers — ${brand.name}`,
+  description: "Owners, brokers, and developers offering lot plans and open development land, ordered by buyer reviews.",
 };
 
 export default function ProvidersPage() {

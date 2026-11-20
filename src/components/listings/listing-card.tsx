@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Flag, HouseLine, MapPin, ShareNetwork, Star } from "@phosphor-icons/react";
+import { Flag, MapPin, ShareNetwork, Star } from "@phosphor-icons/react";
 import {
   PURPOSE_LABELS,
   TYPE_LABELS,
@@ -94,17 +94,14 @@ export function ListingCard({
   provider?: Provider;
   rating?: ProviderRating;
 }) {
-  const image = property.media?.images?.[0];
+  const image = property.media?.images?.[0] ?? "/images/sample-aerial-lot-plan.webp";
   return (
     <article className="property-card listing-card">
       <Link className="property-card-button" href={`/property/${encodeURIComponent(property.id)}`}>
         <span className="property-card-media">
-          {image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={image} alt="" loading="lazy" />
-          ) : (
-            <HouseLine className="property-card-placeholder" aria-hidden="true" />
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={image} alt="" loading="lazy" />
+          {!property.media?.images?.[0] ? <span className="lot-plan-sample">Illustrative lot plan</span> : null}
           <span className={`card-status status-${property.status.toLowerCase()}`}>{property.status}</span>
         </span>
         <span className="property-card-content">
@@ -120,7 +117,8 @@ export function ListingCard({
           <strong className="property-card-price">{formatPrice(property)}</strong>
           <span className="property-card-title">{property.title}</span>
           <span className="property-card-address">{areaLabel(property)}</span>
-          <span className="property-card-facts">{property.area}</span>
+          <span className="property-card-facts"><b>Lot size</b> {property.area}</span>
+          <span className="property-card-land-use">{property.landUse ?? "Open development land"}</span>
           {provider ? (
             <span className="property-card-provider">
               {provider.name} · <Stars rating={rating} />

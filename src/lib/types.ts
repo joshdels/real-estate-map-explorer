@@ -41,6 +41,10 @@ export interface Property {
   area: string;
   price: number;
   measurements?: string;
+  /** Plain-language land facts supplied by the seller. */
+  landUse?: string;
+  terrain?: string;
+  roadAccess?: string;
   status: ListingStatus;
   description?: string;
   utilities: Record<string, string>;
@@ -60,7 +64,7 @@ export interface Property {
   adminArea?: AdminArea;
 }
 
-/** A client of the platform: an owner, broker, or developer who lists properties. */
+/** A client of the platform: an owner, broker, or developer who lists land. */
 export interface Provider {
   id: string;
   name: string;

@@ -3,9 +3,9 @@ import { MapExplorer } from "@/components/explorer/map-explorer";
 import { brand } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: `List a property — ${brand.name}`,
+  title: `List a lot plan — ${brand.name}`,
   description:
-    "Create a property listing and pin its approximate boundary on the map.",
+    "List land for sale with its lot details and approximate boundary on the map.",
   robots: { index: false },
 };
 
