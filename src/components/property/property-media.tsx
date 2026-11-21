@@ -153,10 +153,15 @@ export function PropertyMedia({
 
   const videoId = popup?.kind === "video" ? youTubeId(popup.url) : null;
 
+  // Hide a media action when it has no data for this listing, rather than
+  // showing a dead, disabled control. Link actions (Lot Layout, Routes) always
+  // have a destination, so they stay visible.
+  const availableFeatures = features.filter((item) => !item.disabled);
+
   return (
     <>
       <div className="feature-grid">
-        {features.map((item) => {
+        {availableFeatures.map((item) => {
           const ItemIcon = item.icon;
           return item.href ? (
             <a key={item.label} className={`feature-button ${item.cls}`} href={item.href}>
@@ -168,9 +173,6 @@ export function PropertyMedia({
               type="button"
               className={`feature-button ${item.cls}`}
               onClick={item.onClick}
-              aria-disabled={item.disabled || undefined}
-              disabled={item.disabled}
-              title={item.disabled ? `${item.label} is not available for this listing` : undefined}
             >
               <ItemIcon aria-hidden="true" /> {item.label}
             </button>

@@ -6,6 +6,15 @@ export const metadata: Metadata = {
   title: `Explore the map — ${brand.name}`,
   description:
     "Search sample Philippine listings by region, province, city, and map location.",
+  alternates: { canonical: "/explore" },
+  openGraph: {
+    title: `Explore the map — ${brand.name}`,
+    description:
+      "Search land for sale across the Philippines by region, province, city, and map location.",
+    url: "/explore",
+    type: "website",
+    siteName: brand.name,
+  },
 };
 
 export default function ExplorePage() {

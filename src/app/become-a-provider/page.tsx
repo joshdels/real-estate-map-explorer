@@ -6,6 +6,7 @@ import { brand } from "@/lib/brand";
 export const metadata: Metadata = {
   title: `Become a provider | ${brand.name}`,
   description: "Present and manage mapped lot plans and development land with a seller profile.",
+  alternates: { canonical: "/become-a-provider" },
 };
 
 export default function BecomeProviderPage() {

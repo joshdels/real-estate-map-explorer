@@ -8,12 +8,46 @@ import "@/styles/components.css";
 import "@/styles/layout.css";
 import "@/styles/site.css";
 import { brand } from "@/lib/brand";
+import { SITE_URL } from "@/lib/seo";
 import { AppUiProvider } from "@/components/ui/app-ui";
 import { LotNavigationOverlay } from "@/components/ui/lot-loading-screen";
 
 export const metadata: Metadata = {
-  title: `${brand.name} — ${brand.tagline}`,
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: `${brand.name} — ${brand.tagline}`,
+    template: `%s | ${brand.name}`,
+  },
   description: brand.positioning,
+  applicationName: brand.name,
+  keywords: [
+    "land for sale Philippines",
+    "lot for sale",
+    "lot plans",
+    "provincial land",
+    "real estate map",
+    "lot map Philippines",
+    brand.name,
+  ],
+  alternates: { canonical: "/" },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
+  openGraph: {
+    type: "website",
+    siteName: brand.name,
+    title: `${brand.name} — ${brand.tagline}`,
+    description: brand.positioning,
+    url: SITE_URL,
+    locale: "en_PH",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${brand.name} — ${brand.tagline}`,
+    description: brand.positioning,
+  },
 };
 
 export const viewport: Viewport = {
@@ -32,7 +66,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           href="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.css"
         />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <AppUiProvider>
           {children}
           <LotNavigationOverlay />

@@ -49,6 +49,10 @@ This creates `admin_regions`, `admin_provinces`, `admin_cities` and the `locate_
 
 The passcodes are public and stored in session storage. They protect nothing. Reports, assisted cases, and the activity log are kept in the browser's local storage, so staff see only flags raised on the same device. New listings are public immediately and labeled “not yet reviewed by staff”; “Staff reviewed” means a staff member looked at the listing, not that ownership, price, or boundaries were verified. Real use needs Supabase Auth, per-user ownership, and server-side authorization (see the upgrade backlog in `AGENTS.md`).
 
+### Search engine optimization
+
+Listing and provider pages server-render from the seed and are statically generated, so crawlers and answer engines (AEO / GEO) see full content without running scripts. Each public page sets a canonical URL and Open Graph tags, and carries schema.org JSON-LD: listings emit a `Product` with `Offer`, a `Place` with coordinates and address, the seller `Organization` with its aggregate rating, a breadcrumb trail, and a generated `FAQPage`; providers and the homepage emit matching graphs (`src/lib/seo.ts`, `src/components/seo/json-ld.tsx`). `src/app/sitemap.ts`, `robots.ts`, and `manifest.ts` expose `/sitemap.xml`, `/robots.txt`, and the web manifest. Set `NEXT_PUBLIC_SITE_URL` to the production origin (no trailing slash) so canonical URLs, Open Graph, and the sitemap use the real domain; it defaults to `http://localhost:3000`. Browser-created listings are marked `noindex` since the server cannot render their content.
+
 ## Requirements
 
 - Node.js 22+

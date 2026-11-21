@@ -244,6 +244,11 @@ body:has(.app-shell) {
     right: 0;
     left: 0;
   }
+  /* The map is full width on mobile, so the loading pill centers on the viewport. */
+  .map-loading-hint {
+    top: calc(50% + 32px);
+    left: 50%;
+  }
   body.show-map-view .listing-panel {
     transform: translateX(-104%);
     visibility: hidden;

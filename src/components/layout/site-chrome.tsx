@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { List, X } from "@phosphor-icons/react";
 import { brand } from "@/lib/brand";
+import { clearSession } from "@/lib/session";
+import { useSession } from "@/hooks/use-session";
 
 // Links to /explore are plain anchors on purpose: the map explorer attaches
 // its behavior once per page load, so it must be entered with a full navigation.
@@ -12,6 +14,14 @@ export function SiteHeader({ current }: { current?: "home" | "providers" | "dash
   const [open, setOpen] = useState(false);
   const menuId = useId();
   const navRef = useRef<HTMLElement>(null);
+  const [session, refreshSession] = useSession();
+  // Staff roles land on the staff console; clients on their dashboard.
+  const home = session ? (session.role === "client" ? "/dashboard" : "/staff") : null;
+  const signOut = () => {
+    clearSession();
+    refreshSession();
+    setOpen(false);
+  };
 
   // Close the dropdown on Escape or a click outside the nav.
   useEffect(() => {
@@ -41,10 +51,14 @@ export function SiteHeader({ current }: { current?: "home" | "providers" | "dash
           </span>
         </Link>
         <nav className="page-nav" aria-label="Primary navigation" ref={navRef}>
-          <a className="site-nav-link" href="/explore">Find Lands</a>
-          <Link className="site-nav-link" href="/providers" aria-current={current === "providers" ? "page" : undefined}>Trusted Providers</Link>
-          <Link className="nav-button nav-button-ghost" href="/login">Login</Link>
-          <Link className="nav-button nav-button-solid" href="/become-a-provider">Become a Provider</Link>
+          {home ? (
+            <Link className="nav-button nav-button-solid" href={home}>My workspace</Link>
+          ) : (
+            <>
+              <Link className="nav-button nav-button-ghost" href="/login">Login</Link>
+              <Link className="nav-button nav-button-solid" href="/become-a-provider">Become a Provider</Link>
+            </>
+          )}
           <button
             type="button"
             className="nav-burger"
@@ -59,7 +73,14 @@ export function SiteHeader({ current }: { current?: "home" | "providers" | "dash
             <Link className="nav-dropdown-link" href="/" aria-current={current === "home" ? "page" : undefined} onClick={() => setOpen(false)}>Home</Link>
             <a className="nav-dropdown-link" href="/explore" onClick={() => setOpen(false)}>Find Lands</a>
             <Link className="nav-dropdown-link" href="/providers" aria-current={current === "providers" ? "page" : undefined} onClick={() => setOpen(false)}>Trusted Providers</Link>
-            <Link className="nav-dropdown-link nav-dropdown-login" href="/login" onClick={() => setOpen(false)}>Login</Link>
+            {home ? (
+              <>
+                <Link className="nav-dropdown-link" href={home} onClick={() => setOpen(false)}>My workspace</Link>
+                <button type="button" className="nav-dropdown-link nav-dropdown-signout" onClick={signOut}>Log out</button>
+              </>
+            ) : (
+              <Link className="nav-dropdown-link nav-dropdown-login" href="/login" onClick={() => setOpen(false)}>Login</Link>
+            )}
           </div>
         </nav>
       </div>

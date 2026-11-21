@@ -6,6 +6,7 @@ import { brand } from "@/lib/brand";
 export const metadata: Metadata = {
   title: `Lot sellers — ${brand.name}`,
   description: "Owners, brokers, and developers offering lot plans and open development land, ordered by buyer reviews.",
+  alternates: { canonical: "/providers" },
 };
 
 export default function ProvidersPage() {

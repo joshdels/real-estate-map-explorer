@@ -27,4 +27,5 @@ Adds to the root and `src/AGENTS.md`.
 ## Accessibility
 
 - Text contrast at least 4.5:1, controls at least 40 px tall, visible `:focus-visible` outlines, and `prefers-reduced-motion` respected.
+- On dark surfaces (`--color-night`, indigo cards), button and control labels and their icons must be white or another clearly readable color. Never leave brand-blue text on a dark background: it fails contrast. If a control moves into a dark card, set its text to `#fff` explicitly so an inherited link color cannot make it unreadable.
 - Phosphor icons inherit `currentColor`. Size them through the surrounding component class (normally 18–20 px); never override the webfont's `font-family`, `font-style`, `font-weight`, `:before`, or `:after` rules.

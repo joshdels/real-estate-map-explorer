@@ -337,7 +337,7 @@ function setupListingPortal(
         });
         return;
       }
-      areaStatus.textContent = `Showing listings inside ${regionEntry.name}. Outline is simplified, not a surveyed boundary.`;
+      areaStatus.textContent = `Showing listings inside ${regionEntry.name}.`;
       try {
         const outline = await boundaries.regionOutline(regionEntry.code);
         // Ignore the result if the selection changed while the outline loaded.
@@ -355,12 +355,15 @@ function setupListingPortal(
       }
       return;
     }
-    areaStatus.textContent = `Showing listings inside ${target.name}. Outline is simplified, not a surveyed boundary.`;
+    areaStatus.textContent = `Showing listings inside ${target.name}.`;
     try {
       const outline = await boundaries.outline(provinceEntry.code, cityEntry?.code);
       // Ignore the result if the selection changed while the outline loaded.
       if ((city.value || province.value) !== target.code) return;
-      frame(() => map.showArea(outline as Feature | undefined, target.bbox));
+      // Frame the real outline geometry when we have it, falling back to the
+      // index bbox only when the outline could not be loaded.
+      const box = outline ? featureBounds(outline) : target.bbox;
+      frame(() => map.showArea(outline as Feature | undefined, box));
     } catch {
       areaStatus.textContent = `Showing listings inside ${target.name}. The outline could not be loaded.`;
     }
@@ -429,7 +432,14 @@ function setupListingPortal(
   propertyType.value = params.get("type") ?? "";
   if (params.get("sort")) sort.value = params.get("sort") ?? "recommended";
   render(initialData);
-  pendingFrame = () => map.showAll();
+  // First load frames the whole Philippines using the region boundaries extent,
+  // falling back to the listing markers if the boundary file is unavailable.
+  frame(() => {
+    void boundaries
+      .countryBounds()
+      .then((bbox) => map.frameBounds(bbox))
+      .catch(() => map.showAll());
+  });
 
   areaStatus.textContent = "Loading official area list…";
   const areaReady = boundaries

@@ -55,6 +55,21 @@ function nearbyPin(place: NearbyPlace, icon: string): HTMLElement {
   return element;
 }
 
+// A grouped-count bubble shown while many places overlap. Clicking it zooms in
+// until the cluster breaks apart into individual pins.
+function clusterPin(count: number): HTMLElement {
+  const element = document.createElement("button");
+  element.type = "button";
+  element.className = "nearby-cluster";
+  element.textContent = String(count);
+  element.setAttribute("aria-label", `${count} places here. Zoom in to separate them.`);
+  // Scale the bubble a little with the count so a big group reads as bigger.
+  const size = count < 10 ? 34 : count < 50 ? 40 : 46;
+  element.style.width = `${size}px`;
+  element.style.height = `${size}px`;
+  return element;
+}
+
 const CATEGORY_ICON: Record<NearbyCategory, string> = {
   school: "graduation-cap",
   transport: "bus",
@@ -80,7 +95,13 @@ export function PropertyMiniMap({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const markersRef = useRef<maplibregl.Marker[]>([]);
+  // Clustered HTML markers: one dictionary of all live markers keyed by a
+  // stable id ("c"+clusterId for a cluster, "p"+placeId for a single place),
+  // and the subset currently added to the map, so each render only adds and
+  // removes what changed.
+  const markersById = useRef<Record<string, maplibregl.Marker>>({});
+  const markersOnScreen = useRef<Record<string, maplibregl.Marker>>({});
+  const popupRef = useRef<maplibregl.Popup | null>(null);
   const [ready, setReady] = useState(false);
 
   // Build the map once. All three basemaps are added as layers and toggled by
@@ -118,6 +139,96 @@ export function PropertyMiniMap({
 
     new maplibregl.Marker({ color: "#4f57e3" }).setLngLat([lng, lat]).addTo(map);
 
+    // One reused popup shows the hovered (or focused) place's name and distance.
+    const popup = new maplibregl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      offset: 16,
+      className: "nearby-popup",
+    });
+    popupRef.current = popup;
+
+    // Sync HTML markers to whatever the cluster source renders in view: grouped
+    // places collapse into a numbered bubble, and single places show a pin.
+    const updateMarkers = () => {
+      const src = map.getSource("nearby-src") as maplibregl.GeoJSONSource | undefined;
+      if (!src) return;
+      const next: Record<string, maplibregl.Marker> = {};
+      for (const feature of map.querySourceFeatures("nearby-src")) {
+        if (feature.geometry.type !== "Point") continue;
+        const [flng, flat] = feature.geometry.coordinates as [number, number];
+        const props = feature.properties as Record<string, unknown>;
+        let id: string;
+        let marker = undefined as maplibregl.Marker | undefined;
+
+        if (props.cluster) {
+          const clusterId = props.cluster_id as number;
+          const count = props.point_count as number;
+          id = `c${clusterId}`;
+          marker = markersById.current[id];
+          if (!marker) {
+            const element = clusterPin(count);
+            element.addEventListener("click", () => {
+              src
+                .getClusterExpansionZoom(clusterId)
+                .then((zoom) =>
+                  map.easeTo({
+                    center: [flng, flat],
+                    zoom: zoom ?? map.getZoom() + 2,
+                    duration: reducedMotion() ? 0 : 500,
+                  }),
+                )
+                .catch(() => undefined);
+            });
+            marker = new maplibregl.Marker({ element, anchor: "center" }).setLngLat([flng, flat]);
+            markersById.current[id] = marker;
+          } else {
+            marker.getElement().textContent = String(count);
+          }
+        } else {
+          id = `p${props.pid}`;
+          marker = markersById.current[id];
+          if (!marker) {
+            const category = props.category as NearbyCategory;
+            const place = {
+              name: String(props.name),
+              category,
+              distanceM: Number(props.distanceM),
+              subtype: String(props.subtype),
+            } as NearbyPlace;
+            const element = nearbyPin(place, CATEGORY_ICON[category]);
+            element.tabIndex = 0;
+            element.setAttribute("role", "button");
+            element.setAttribute("aria-label", `${place.name}, ${formatDistance(place.distanceM)} away`);
+            const open = () => {
+              popup
+                .setLngLat([flng, flat])
+                .setHTML(`<strong class="nearby-popup-name"></strong><span class="nearby-popup-meta"></span>`)
+                .addTo(map);
+              const root = popup.getElement();
+              const name = root?.querySelector(".nearby-popup-name");
+              const meta = root?.querySelector(".nearby-popup-meta");
+              if (name) name.textContent = place.name;
+              if (meta) meta.textContent = `${formatDistance(place.distanceM)} away · ${place.subtype}`;
+            };
+            const close = () => popup.remove();
+            element.addEventListener("pointerenter", open);
+            element.addEventListener("pointerleave", close);
+            element.addEventListener("focus", open);
+            element.addEventListener("blur", close);
+            marker = new maplibregl.Marker({ element, anchor: "center" }).setLngLat([flng, flat]);
+            markersById.current[id] = marker;
+          }
+        }
+        next[id] = marker;
+        if (!markersOnScreen.current[id]) marker.addTo(map);
+      }
+      for (const id of Object.keys(markersOnScreen.current)) {
+        if (!next[id]) markersOnScreen.current[id].remove();
+      }
+      markersOnScreen.current = next;
+    };
+
     map.on("load", () => {
       if (polygon && polygon.length >= 3) {
         const ring = [...polygon, polygon[0]].map(([la, ln]) => [ln, la]);
@@ -129,12 +240,35 @@ export function PropertyMiniMap({
         map.addLayer({ id: "lot-line", type: "line", source: "lot", paint: { "line-color": "#6f78f0", "line-width": 2 } });
         map.fitBounds(bounds(polygon), { padding: 64, maxZoom: 17, duration: 0 });
       }
+
+      // Cluster source for the nearby places. Groups break apart above
+      // clusterMaxZoom, so zooming in reveals the individual pins.
+      map.addSource("nearby-src", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+        cluster: true,
+        clusterRadius: 55,
+        clusterMaxZoom: 15,
+      });
+      // An invisible layer keeps the source instantiated so querySourceFeatures
+      // returns its clusters and points; the visible marks are the HTML markers.
+      map.addLayer({
+        id: "nearby-src-probe",
+        type: "circle",
+        source: "nearby-src",
+        paint: { "circle-radius": 0, "circle-opacity": 0 },
+      });
+      map.on("render", updateMarkers);
+
       setReady(true);
     });
 
     return () => {
-      markersRef.current.forEach((marker) => marker.remove());
-      markersRef.current = [];
+      Object.values(markersById.current).forEach((marker) => marker.remove());
+      markersById.current = {};
+      markersOnScreen.current = {};
+      popup.remove();
+      popupRef.current = null;
       map.remove();
       mapRef.current = null;
       setReady(false);
@@ -153,49 +287,30 @@ export function PropertyMiniMap({
     map.setMaxZoom(18);
   }, [basemap, ready]);
 
-  // Render the nearby markers for the active category (or all when none).
+  // Feed the active category (or all) into the cluster source. The render
+  // handler installed on load turns the result into clustered HTML markers.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    markersRef.current.forEach((marker) => marker.remove());
-
-    // One reused popup shows the hovered (or focused) place's name and distance.
-    const popup = new maplibregl.Popup({
-      closeButton: false,
-      closeOnClick: false,
-      offset: 16,
-      className: "nearby-popup",
-    });
+    const src = map.getSource("nearby-src") as maplibregl.GeoJSONSource | undefined;
+    if (!src) return;
 
     const shown = activeCategory ? nearby.filter((place) => place.category === activeCategory) : nearby;
-    markersRef.current = shown.map((place) => {
-      const [plat, plng] = place.coordinates;
-      const element = nearbyPin(place, CATEGORY_ICON[place.category]);
-      element.tabIndex = 0;
-      element.setAttribute("role", "button");
-      element.setAttribute("aria-label", `${place.name}, ${formatDistance(place.distanceM)} away`);
-      const open = () => {
-        popup
-          .setLngLat([plng, plat])
-          .setHTML(
-            `<strong class="nearby-popup-name"></strong><span class="nearby-popup-meta"></span>`,
-          )
-          .addTo(map);
-        const root = popup.getElement();
-        const name = root?.querySelector(".nearby-popup-name");
-        const meta = root?.querySelector(".nearby-popup-meta");
-        if (name) name.textContent = place.name;
-        if (meta) meta.textContent = `${formatDistance(place.distanceM)} away · ${place.subtype}`;
-      };
-      const close = () => popup.remove();
-      element.addEventListener("pointerenter", open);
-      element.addEventListener("pointerleave", close);
-      element.addEventListener("focus", open);
-      element.addEventListener("blur", close);
-      return new maplibregl.Marker({ element, anchor: "center" })
-        .setLngLat([plng, plat])
-        .addTo(map);
+    src.setData({
+      type: "FeatureCollection",
+      features: shown.map((place) => ({
+        type: "Feature",
+        properties: {
+          pid: place.id,
+          category: place.category,
+          name: place.name,
+          distanceM: place.distanceM,
+          subtype: place.subtype,
+        },
+        geometry: { type: "Point", coordinates: [place.coordinates[1], place.coordinates[0]] },
+      })),
     });
+
     // When a single category is toggled, frame the lot and those places so the
     // map visibly moves to that set of points.
     if (activeCategory && shown.length > 0) {
@@ -205,10 +320,6 @@ export function PropertyMiniMap({
     } else if (polygon && polygon.length >= 3) {
       map.fitBounds(bounds(polygon), { padding: 64, maxZoom: 17, duration: reducedMotion() ? 0 : 600 });
     }
-
-    return () => {
-      popup.remove();
-    };
   }, [nearby, activeCategory, ready, coordinates, polygon]);
 
   return <div ref={ref} className="detail-minimap-interactive" aria-label="Interactive lot plan location map" />;

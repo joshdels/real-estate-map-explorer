@@ -75,9 +75,9 @@
   /* Keep the CTA text white even inside .page-shell, which otherwise tints links. */
   color: #fff;
 }
-/* Inline links show on desktop; the burger appears only on narrow screens. */
+/* The burger holds Find Lands and Trusted Providers at every width. */
 .nav-burger {
-  display: none;
+  display: inline-grid;
   width: 44px;
   height: 44px;
   place-items: center;
@@ -120,6 +120,16 @@
   background: var(--color-tint);
   color: var(--color-brand-dark);
 }
+button.nav-dropdown-link {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.nav-dropdown-signout { color: #c0392b; }
+.nav-dropdown-signout:hover { background: #fdecec; color: #a3281c; }
 .site-nav-link {
   display: inline-flex;
   min-height: 40px;
@@ -1170,8 +1180,8 @@ a.property-card-button { text-decoration: none; }
   height: 28px;
   place-items: center;
   border-radius: 50%;
-  background: rgb(255 255 255 / 10%);
-  color: var(--color-neon);
+  background: rgb(255 255 255 / 14%);
+  color: #fff;
   font-size: 0.72rem;
   font-weight: 900;
 }
@@ -1188,13 +1198,23 @@ a.property-card-button { text-decoration: none; }
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #d9dcf2;
+  color: #e7e9f8;
   cursor: pointer;
   font-size: 0.82rem;
   font-weight: 800;
   text-decoration: none;
 }
-.provider-sidebar-link { margin-top: auto; border: 1px solid rgb(255 255 255 / 14%); }
+.provider-sidebar-link,
+.provider-sidebar-actions a,
+.provider-sidebar-actions button { color: #e7e9f8; }
+.provider-sidebar-link svg,
+.provider-sidebar-actions a svg,
+.provider-sidebar-actions button svg { color: #c3c9ee; }
+.provider-sidebar-link {
+  margin-top: auto;
+  border: 1px solid rgb(255 255 255 / 16%);
+  background: rgb(255 255 255 / 6%);
+}
 .provider-sidebar-link svg,
 .provider-sidebar-actions svg,
 .provider-sidebar-nav svg { width: 19px; height: 19px; flex: 0 0 auto; }
@@ -1211,7 +1231,14 @@ a.property-card-button { text-decoration: none; }
   display: grid;
   gap: 18px;
   margin-top: 28px;
+  /* Let each card size to its own content so the shorter card does not stretch
+     and leave an awkward gap between its heading and fields. */
+  align-items: start;
 }
+/* On the access screen the intro panel has little content, so center it
+   vertically instead of pinning the link far below with a dark void. */
+.provider-portal-access .provider-sidebar { justify-content: center; }
+.provider-portal-access .provider-sidebar-link { margin-top: 26px; }
 .provider-access-card {
   max-width: none;
   margin: 0;

@@ -62,18 +62,29 @@ export function formatPrice(property: Pick<Property, "price" | "purpose">): stri
   return `${peso.format(property.price)}${property.purpose === "rent" ? " / month" : ""}`;
 }
 
-/** Short price label for dense map markers. Full prices remain visible in cards and popups. */
-export function formatCompactPrice(
-  property: Pick<Property, "price" | "purpose">,
-): string {
-  const { price } = property;
+/** Rounded peso amount for dense map markers, e.g. ₱5M or ₱850K. */
+export function formatCompactAmount(price: number): string {
   const divisor = price >= 1_000_000 ? 1_000_000 : price >= 1_000 ? 1_000 : 1;
   const suffix = divisor === 1_000_000 ? "M" : divisor === 1_000 ? "K" : "";
   const scaled = price / divisor;
   const amount = scaled >= 100 || Number.isInteger(scaled)
     ? String(Math.round(scaled))
     : scaled.toFixed(1).replace(/\.0$/, "");
-  return `₱${amount}${suffix}${property.purpose === "rent" ? "/mo" : ""}`;
+  return `₱${amount}${suffix}`;
+}
+
+/** Short price label for dense map markers. Full prices remain visible in cards and popups. */
+export function formatCompactPrice(
+  property: Pick<Property, "price" | "purpose">,
+): string {
+  return `${formatCompactAmount(property.price)}${property.purpose === "rent" ? "/mo" : ""}`;
+}
+
+/** Rounded price range for a group of lots, e.g. "₱2M – ₱5M" or a single "₱3M". */
+export function formatCompactPriceRange(min: number, max: number): string {
+  const low = formatCompactAmount(min);
+  const high = formatCompactAmount(max);
+  return low === high ? low : `${low} – ${high}`;
 }
 
 /** Listings whose representative point falls inside the current map view. */

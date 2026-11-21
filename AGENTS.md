@@ -97,6 +97,7 @@ The primary workflow is: choose an area, explore map results, refine filters, se
 - Avoid internal, technical, government, and mapping jargon in marketing copy. Say "search by region, province, and city" instead of leading with boundary datasets or agency names. Keep PSA / NAMRIA wording only where the required data credit or accuracy notice appears.
 - Avoid em dashes and en dashes in interface copy. Use a full stop, comma, colon, or a new sentence instead.
 - Do not use vague headings such as "Kept clean" or system terms such as "flag workflow" when a clear user outcome is available.
+- Do not add extra small helper text: no eyebrows, mini captions, sub-labels, or repeated accuracy notes next to a control that does not need one. Keep one accuracy or data notice per surface, not one under every element. When in doubt, remove the extra line rather than add it.
 
 ### Visual accent
 
@@ -145,9 +146,10 @@ Ordered by value. When you finish one, remove it and note what changed in `READM
 5. **Media uploads.** Supabase Storage with size/type checks instead of pasted URLs.
 6. **Listing edit form.** Listings can be created, re-grouped, re-statused, and removed, but not edited field by field.
 7. **Buyer tools.** Saved listings, side-by-side comparison, and inquiry forms routed to the provider.
-8. **SEO.** Server-render listing and provider pages from the database, add a sitemap and structured data.
-9. **Map scale.** Marker clustering and viewport-based loading before the listing count grows.
-10. **Sample agent card.** The seed `agent` block looks like a real name and phone number; confirm it is fictional or replace it.
+8. **Map scale.** Marker clustering and viewport-based loading before the listing count grows.
+9. **Sample agent card.** The seed `agent` block looks like a real name and phone number; confirm it is fictional or replace it.
+
+SEO is in place: listing and provider pages server-render from the seed with canonical URLs, Open Graph, and schema.org JSON-LD (`src/lib/seo.ts`, `src/components/seo/json-ld.tsx`), plus `sitemap.ts`, `robots.ts`, and `manifest.ts`. When the normalized tables land, regenerate the sitemap and structured data from the database instead of the seed, and set `NEXT_PUBLIC_SITE_URL` to the production origin.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

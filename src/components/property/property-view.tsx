@@ -59,8 +59,43 @@ export function PropertyView({ id }: { id: string }) {
     .slice(0, 2)
     .toUpperCase();
 
+  const reviewedBadge =
+    property.review === "reviewed" ? (
+      <span className="card-badge card-badge-reviewed">
+        <SealCheck aria-hidden="true" /> Staff reviewed
+      </span>
+    ) : (
+      <span className="card-badge">Not yet reviewed by staff</span>
+    );
+
   return (
     <>
+      <header className="detail-headline">
+        <div className="detail-headline-main">
+          <p className="detail-kicker">
+            {PURPOSE_LABELS[property.purpose ?? "sale"]} · {TYPE_LABELS[property.propertyType ?? "lot"]} · Sample data
+          </p>
+          <h1 className="detail-headline-title">{property.title}</h1>
+          <p className="detail-headline-address">
+            {property.address}
+            {area ? ` · ${[area.city, area.province].filter(Boolean).join(", ")}` : ""}
+          </p>
+          <p className="property-card-badges">
+            {reviewedBadge}
+            {property.assistedBy ? <span className="card-badge">Assisted listing</span> : null}
+          </p>
+        </div>
+        <div className="detail-headline-aside">
+          <p className="detail-headline-market">{PURPOSE_LABELS[property.purpose ?? "sale"]}</p>
+          <p className="detail-headline-price">{formatPrice(property)}</p>
+          <p className="detail-headline-meta">
+            {property.area}
+            {" · "}
+            <span className="status-pill">{property.status}</span>
+          </p>
+        </div>
+      </header>
+
       {provider ? (
         <section className="detail-provider-banner" aria-labelledby="listed-by-title">
           <Link
@@ -103,12 +138,18 @@ export function PropertyView({ id }: { id: string }) {
           ) : null}
         </section>
 
-        {property.description ? (
-          <section className="detail-block">
-            <h2>Land details</h2>
-            <p>{property.description}</p>
-          </section>
-        ) : null}
+        <section className="detail-block">
+          <h2>Land details</h2>
+          {property.description ? <p>{property.description}</p> : null}
+          <dl className="property-facts detail-facts">
+            <div><dt>Area</dt><dd>{property.area}</dd></div>
+            <div><dt>Measurements</dt><dd>{property.measurements || "Not specified"}</dd></div>
+            <div><dt>Status</dt><dd><span className="status-pill">{property.status}</span></dd></div>
+            <div><dt>Land use</dt><dd>{property.landUse || "Open development land"}</dd></div>
+            <div><dt>Terrain</dt><dd>{property.terrain || "Confirm with seller"}</dd></div>
+            <div><dt>Road access</dt><dd>{property.roadAccess || property.address}</dd></div>
+          </dl>
+        </section>
 
         {utilities.length > 0 ? (
           <section className="detail-block">
@@ -141,29 +182,10 @@ export function PropertyView({ id }: { id: string }) {
         </section>
         </div>
 
+        <div className="detail-side">
         <aside className="detail-summary">
-          <p className="detail-kicker">
-            {PURPOSE_LABELS[property.purpose ?? "sale"]} · {TYPE_LABELS[property.propertyType ?? "lot"]} · Sample data
-          </p>
-          <h1>{property.title}</h1>
-          <p className="detail-price">{formatPrice(property)}</p>
-          <p className="detail-address">
-            {property.address}
-            {area ? ` · ${[area.city, area.province].filter(Boolean).join(", ")}` : ""}
-          </p>
-          <p className="property-card-badges">
-            {property.review === "reviewed" ? (
-              <span className="card-badge card-badge-reviewed">
-                <SealCheck aria-hidden="true" /> Staff reviewed
-              </span>
-            ) : (
-              <span className="card-badge">Not yet reviewed by staff</span>
-            )}
-            {property.assistedBy ? <span className="card-badge">Assisted listing</span> : null}
-          </p>
           <dl className="property-facts">
             <div><dt>Area</dt><dd>{property.area}</dd></div>
-            <div><dt>Price</dt><dd>{formatPrice(property)}</dd></div>
             <div><dt>Measurements</dt><dd>{property.measurements || "Not specified"}</dd></div>
             <div><dt>Status</dt><dd><span className="status-pill">{property.status}</span></dd></div>
             <div><dt>Land use</dt><dd>{property.landUse || "Open development land"}</dd></div>
@@ -173,9 +195,9 @@ export function PropertyView({ id }: { id: string }) {
           <ListingTools property={property} />
           <PropertyMedia title={property.title} media={property.media ?? {}} mapHref={mapHref} />
         </aside>
+        <AgentContactCard agent={data.agent} />
+        </div>
       </div>
-
-      <AgentContactCard agent={data.agent} />
     </>
   );
 }

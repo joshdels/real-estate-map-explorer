@@ -37,8 +37,9 @@ button {
 .map-loading-hint {
   position: absolute;
   z-index: 3;
-  top: 50%;
-  left: 50%;
+  /* Centered over the map strip (left:0 to right:panel), under the 72px header. */
+  top: calc(50% + 36px);
+  left: calc(50% - var(--explorer-panel-width, 40vw) / 2);
   display: inline-flex;
   align-items: center;
   padding: 8px 16px;
@@ -48,6 +49,19 @@ button {
   color: #fff;
   font-size: 0.82rem;
   font-weight: 700;
+}
+.map-loading-hint::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  margin-right: 9px;
+  border: 2px solid rgb(255 255 255 / 35%);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-loading-hint::before { animation: none; }
 }
 .map-loading-hint[hidden] { display: none; }
 .property-card-skeleton {
@@ -1209,6 +1223,61 @@ a:focus-visible {
   background: transparent !important;
   box-shadow: none !important;
 }
+/* Grouped-lots bubble shown while pins overlap at low zoom. White, so the count
+   reads over the satellite basemap; click it to zoom in and split the group. */
+.lot-cluster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  line-height: 1;
+  cursor: pointer;
+}
+.lot-cluster-bubble {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 10px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: var(--color-brand);
+  color: #fff;
+  box-shadow: 0 4px 12px #151a4f4d;
+  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+.lot-cluster:hover .lot-cluster-bubble {
+  background: var(--color-neon);
+  border-color: var(--color-neon);
+  color: var(--color-night);
+  box-shadow: 0 6px 20px rgb(255 240 74 / 45%);
+}
+.lot-cluster:focus-visible { outline: none; }
+.lot-cluster:focus-visible .lot-cluster-bubble { outline: 3px solid #fff; outline-offset: 2px; }
+.lot-cluster-count { font-size: 1rem; font-weight: 900; color: inherit; letter-spacing: -0.01em; }
+.lot-cluster-label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: inherit;
+  opacity: 0.85;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.lot-cluster-range {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  background: var(--color-brand);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px #151a4f4d;
+}
 .lot-label .lot-label-summary {
   display: block;
   overflow: hidden;
@@ -2090,6 +2159,77 @@ a:focus-visible {
 .detail-back:hover {
   text-decoration: underline;
 }
+
+/* EstateBlock-style headline: title + place on the left, price + area on the right. */
+.detail-headline {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px 28px;
+  width: 100%;
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: clamp(8px, 2vw, 16px) 20px 0;
+}
+.detail-headline-title {
+  margin: 4px 0 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  color: var(--color-ink-strong);
+}
+.detail-headline-address {
+  margin: 10px 0 0;
+  color: #4b5570;
+  font-weight: 700;
+}
+.detail-headline .property-card-badges { margin-top: 12px; }
+.detail-headline-market {
+  margin: 0;
+  color: #6a719a;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.detail-headline-price {
+  margin: 4px 0 0;
+  color: #3b41c7;
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  font-weight: 800;
+}
+.detail-headline-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 0;
+  color: #4b5570;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+.detail-summary-price { margin: 0 0 12px; }
+@media (min-width: 760px) {
+  .detail-headline {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+  .detail-headline-aside { text-align: right; }
+  .detail-headline-aside .detail-headline-meta { justify-content: flex-end; }
+}
+
+/* Provider name and other in-content links: brand ink, no default underline. */
+.detail-provider a,
+.page-shell .detail-provider a {
+  color: var(--color-ink-strong);
+  font-weight: 800;
+  text-decoration: none;
+}
+.detail-provider a:hover,
+.page-shell .detail-provider a:hover {
+  color: var(--color-brand-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .detail-provider-banner {
   display: grid;
   width: 100%;
@@ -2150,6 +2290,14 @@ a:focus-visible {
 .detail-main {
   display: grid;
   gap: 20px;
+  align-content: start;
+  min-width: 0;
+}
+/* Right column: the quick-info card and the contact card stacked as separate
+   cards, so the dark contact card sits outside the white info card. */
+.detail-side {
+  display: grid;
+  gap: 18px;
   align-content: start;
   min-width: 0;
 }
@@ -2360,7 +2508,10 @@ a:focus-visible {
     align-items: start;
     grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
   }
-  .detail-summary {
+  /* As the page scrolls, the quick-info card scrolls away and the Call or text
+     card pins to the top, so the contact action is always in reach. */
+  .detail-side { align-self: start; }
+  .detail-side .agent-contact {
     position: sticky;
     top: 16px;
   }
@@ -2597,6 +2748,21 @@ span.feature-button[aria-disabled="true"] {
 .nearby-pin-groceries { background: #2f9e52; }
 .nearby-pin-health { background: #e5484d; }
 .nearby-pin-finance { background: #8a4fd8; }
+/* Grouped-count bubble: white, so the number reads clearly over satellite and
+   street basemaps. Click to zoom in and split the group into pins. */
+.nearby-cluster {
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--color-brand);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--color-night);
+  box-shadow: 0 2px 8px rgb(14 18 46 / 40%);
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.nearby-cluster:focus-visible { outline: 3px solid var(--color-brand); outline-offset: 2px; }
 .detail-nearby-chips {
   display: flex;
   flex-wrap: wrap;
@@ -2995,6 +3161,33 @@ span.feature-button[aria-disabled="true"] {
   margin: 28px auto 0;
   padding: 0 20px;
 }
+/* In the listing right column the card spans the full width with no extra
+   gutter, as its own card beside the white quick-info card. */
+.detail-side .agent-contact {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+.detail-side .agent-contact-actions > * { flex: 1 1 calc(50% - 10px); justify-content: center; }
+/* The spec grid now sits inside Land details, where the wider column fits three
+   columns cleanly and leaves no empty cell. */
+.detail-facts { margin: 16px 0 0; }
+@media (min-width: 640px) {
+  .detail-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+/* Keep the secondary actions readable: white text and icons on a panel with
+   enough contrast against the dark card. `.page-shell a` colors links blue, so
+   these overrides must out-specify it. The Call button keeps its dark text. */
+.page-shell a.agent-contact-action,
+.agent-contact-action,
+.agent-contact-action svg { color: #fff; }
+.agent-contact-action { background: rgb(255 255 255 / 14%); border-color: rgb(255 255 255 / 28%); }
+.page-shell a.agent-contact-action-call,
+.agent-contact-action-call,
+.agent-contact-action-call svg { color: var(--color-night); }
+/* The lot-media buttons that are links (Lot Layout, Routes) must stay white on
+   their colored fills, not inherit the blue page link color. */
+.page-shell a.feature-button { color: #fff; }
 .agent-contact-inner {
   padding: clamp(20px, 4vw, 32px);
   border-radius: 18px;

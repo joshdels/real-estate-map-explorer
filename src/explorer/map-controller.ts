@@ -8,7 +8,7 @@ import type {
 import type { Feature, FeatureCollection } from "geojson";
 import { config } from "@/explorer/config";
 import { phosphorIcon } from "@/explorer/dom";
-import { formatCompactPrice, formatPrice } from "@/lib/listings";
+import { formatCompactPrice, formatCompactPriceRange, formatPrice } from "@/lib/listings";
 import type { ListingBounds } from "@/lib/listings";
 import type { Coordinate, Dataset, DestinationType, Property } from "@/lib/types";
 
@@ -17,7 +17,13 @@ const SOURCE_IDS = {
   routes: "property-routes",
   draft: "boundary-draft",
   area: "admin-area",
+  lots: "lots",
 } as const;
+
+// Lots group into one bubble up to this zoom; zoom past it and every lot pin
+// shows on its own. Keep it low enough that street-level views are never
+// clustered.
+const CLUSTER_MAX_ZOOM = 11;
 
 maplibregl.setWorkerUrl("/maplibre-gl-worker.mjs");
 
@@ -25,6 +31,10 @@ export class MapController {
   private readonly map: maplibregl.Map;
   private readonly readyPromise: Promise<void>;
   private readonly markers = new Map<string, maplibregl.Marker>();
+  // Clustered lot markers: bubbles reused by cluster id, and the composite-keyed
+  // set of markers (lot pins and cluster bubbles) currently on the map.
+  private readonly clusterMarkers = new Map<number, maplibregl.Marker>();
+  private markersOnScreen = new Map<string, maplibregl.Marker>();
   private activePopup?: maplibregl.Popup;
   private readonly destinationMarkers: maplibregl.Marker[] = [];
   private readonly measurementMarkers: maplibregl.Marker[] = [];
@@ -65,9 +75,12 @@ export class MapController {
     });
     this.map.on("load", () => {
       this.loaded = true;
+      this.observeContainerSize();
       this.addOverlaySources();
       this.syncSelection();
       this.syncArea();
+      // If data arrived before the style loaded, re-feed the lot source now.
+      if (this.data) this.render(this.data);
     });
     this.map.on("click", (event: MapMouseEvent) =>
       this.mapClickHandler?.([event.lngLat.lat, event.lngLat.lng]),
@@ -82,6 +95,24 @@ export class MapController {
   invalidateSize(): void {
     // The map is hidden in list view; recompute dimensions when it reappears.
     requestAnimationFrame(() => this.map.resize());
+  }
+
+  // MapLibre only tracks window resizes, so container size changes that are not
+  // tied to the window (panel width breakpoints, the header, list/map toggles)
+  // leave the canvas the old size and expose blank tile gaps at the edges.
+  // A ResizeObserver resizes the map whenever its own box changes.
+  private observeContainerSize(): void {
+    if (typeof ResizeObserver === "undefined") return;
+    const container = this.map.getContainer();
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        this.map.resize();
+      });
+    });
+    observer.observe(container);
   }
 
   onViewportChange(handler: () => void): void {
@@ -157,15 +188,91 @@ export class MapController {
       });
       content.addEventListener("pointerenter", cancelClose);
       content.addEventListener("pointerleave", closePreview);
+      // Built but not added here: updateClusters() adds each pin only when it is
+      // not swallowed by a cluster at the current zoom.
       const marker = new maplibregl.Marker({ element, anchor: "center" })
         .setLngLat(toLngLat(property.coordinates))
-        .setPopup(popup)
-        .addTo(this.map);
+        .setPopup(popup);
       popup.on("close", () => {
         if (this.activePopup === popup) this.activePopup = undefined;
       });
       this.markers.set(property.id, marker);
     });
+
+    // Feed the lot points into the cluster source; the render handler turns the
+    // result into bubbles and pins.
+    this.setSourceData(
+      SOURCE_IDS.lots,
+      featureCollection(
+        data.properties.map((property) => ({
+          type: "Feature",
+          properties: { id: property.id, price: property.price },
+          geometry: { type: "Point", coordinates: toLngLat(property.coordinates) },
+        })),
+      ),
+    );
+    this.updateClusters();
+  }
+
+  // Sync lot markers to the cluster source: grouped lots show a numbered bubble,
+  // single lots show their pin, and bubbles zoom in to split on click.
+  private updateClusters(): void {
+    if (!this.loaded) return;
+    const src = this.map.getSource(SOURCE_IDS.lots) as GeoJSONSource | undefined;
+    if (!src || !this.map.isSourceLoaded(SOURCE_IDS.lots)) return;
+    const next = new Map<string, maplibregl.Marker>();
+    for (const feature of this.map.querySourceFeatures(SOURCE_IDS.lots)) {
+      if (feature.geometry.type !== "Point") continue;
+      const [lng, lat] = feature.geometry.coordinates as [number, number];
+      const props = feature.properties as Record<string, unknown>;
+
+      if (props.cluster) {
+        const clusterId = props.cluster_id as number;
+        const count = props.point_count as number;
+        const minPrice = Number(props.minPrice);
+        const maxPrice = Number(props.maxPrice);
+        const key = `c${clusterId}`;
+        let marker = this.clusterMarkers.get(clusterId);
+        if (!marker) {
+          const element = lotClusterMarker(count, minPrice, maxPrice);
+          element.addEventListener("click", () => {
+            src
+              .getClusterExpansionZoom(clusterId)
+              .then((zoom) =>
+                this.map.easeTo({
+                  center: [lng, lat],
+                  zoom: zoom ?? this.map.getZoom() + 2,
+                  duration: reducedMotion() ? 0 : 500,
+                }),
+              )
+              .catch(() => undefined);
+          });
+          marker = new maplibregl.Marker({ element, anchor: "center" }).setLngLat([lng, lat]);
+          this.clusterMarkers.set(clusterId, marker);
+        } else {
+          const root = marker.getElement();
+          const label = root.querySelector(".lot-cluster-count");
+          if (label) label.textContent = String(count);
+          const range = root.querySelector(".lot-cluster-range");
+          if (range && Number.isFinite(minPrice) && Number.isFinite(maxPrice)) {
+            range.textContent = formatCompactPriceRange(minPrice, maxPrice);
+          }
+        }
+        next.set(key, marker);
+        if (!this.markersOnScreen.has(key)) marker.addTo(this.map);
+      } else {
+        const id = String(props.id);
+        const key = `p${id}`;
+        const marker = this.markers.get(id);
+        if (!marker) continue;
+        next.set(key, marker);
+        if (!this.markersOnScreen.has(key)) marker.addTo(this.map);
+      }
+    }
+    for (const [key, marker] of this.markersOnScreen) {
+      if (!next.has(key)) marker.remove();
+    }
+    this.markersOnScreen = next;
   }
 
   focus(property: Property): void {
@@ -185,6 +292,12 @@ export class MapController {
     const marker = this.markers.get(property.id);
     const popup = marker?.getPopup();
     if (!marker || !popup) return;
+    // The pin may be inside a cluster; ensure it is on the map before its popup.
+    const key = `p${property.id}`;
+    if (!this.markersOnScreen.has(key)) {
+      marker.addTo(this.map);
+      this.markersOnScreen.set(key, marker);
+    }
     if (this.activePopup && this.activePopup !== popup) this.activePopup.remove();
     this.activePopup = popup;
     if (!popup.isOpen()) popup.addTo(this.map);
@@ -245,6 +358,20 @@ export class MapController {
       });
   }
 
+  /** Frame an arbitrary bounding box ([west, south, east, north]), e.g. the whole country. */
+  frameBounds(bbox: [number, number, number, number]): void {
+    this.map.fitBounds(
+      [
+        [bbox[0], bbox[1]],
+        [bbox[2], bbox[3]],
+      ],
+      {
+        padding: innerWidth > 900 ? 48 : 24,
+        duration: reducedMotion() ? 0 : 700,
+      },
+    );
+  }
+
   /**
    * Outlines the selected PSA/NAMRIA administrative area and frames it.
    * Pass no feature to remove the outline. `bbox` is [west, south, east, north].
@@ -258,7 +385,13 @@ export class MapController {
           [bbox[0], bbox[1]],
           [bbox[2], bbox[3]],
         ],
-        { padding: 40, duration: reducedMotion() ? 0 : 700 },
+        // Roomier, slightly larger padding on the right where the controls sit,
+        // so the region outline is framed with breathing room on every side.
+        {
+          padding: { top: 48, bottom: 48, left: 48, right: 64 },
+          maxZoom: 13,
+          duration: reducedMotion() ? 0 : 700,
+        },
       );
   }
 
@@ -431,6 +564,28 @@ export class MapController {
       },
       filter: ["==", ["geometry-type"], "Point"],
     });
+
+    // Cluster source for the lot pins. Groups break apart above CLUSTER_MAX_ZOOM
+    // so close-in views always show individual lots. The HTML markers are the
+    // visible marks; this invisible probe layer just keeps the source queryable.
+    this.map.addSource(SOURCE_IDS.lots, {
+      type: "geojson",
+      data: featureCollection([]),
+      cluster: true,
+      clusterRadius: 60,
+      clusterMaxZoom: CLUSTER_MAX_ZOOM,
+      clusterProperties: {
+        minPrice: ["min", ["get", "price"]],
+        maxPrice: ["max", ["get", "price"]],
+      },
+    });
+    this.map.addLayer({
+      id: "lots-probe",
+      type: "circle",
+      source: SOURCE_IDS.lots,
+      paint: { "circle-radius": 0, "circle-opacity": 0 },
+    });
+    this.map.on("render", () => this.updateClusters());
   }
 
   private syncSelection(): void {
@@ -460,6 +615,9 @@ export class MapController {
   private clearPropertyMarkers(): void {
     this.markers.forEach((marker) => marker.remove());
     this.markers.clear();
+    this.clusterMarkers.forEach((marker) => marker.remove());
+    this.clusterMarkers.clear();
+    this.markersOnScreen.clear();
     this.peekedId = undefined;
   }
 
@@ -536,6 +694,40 @@ function featureCollection(
   features: Feature[],
 ): FeatureCollection {
   return { type: "FeatureCollection", features };
+}
+
+function lotClusterMarker(count: number, minPrice: number, maxPrice: number): HTMLButtonElement {
+  const hasRange = Number.isFinite(minPrice) && Number.isFinite(maxPrice);
+  const rangeText = hasRange ? formatCompactPriceRange(minPrice, maxPrice) : "";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "lot-cluster";
+  button.setAttribute(
+    "aria-label",
+    `${count} lots here${rangeText ? `, ${rangeText}` : ""}. Zoom in to separate them.`,
+  );
+
+  const bubble = document.createElement("span");
+  bubble.className = "lot-cluster-bubble";
+  const size = count < 10 ? 50 : count < 50 ? 58 : 66;
+  bubble.style.width = `${size}px`;
+  bubble.style.height = `${size}px`;
+  const value = document.createElement("span");
+  value.className = "lot-cluster-count";
+  value.textContent = String(count);
+  const label = document.createElement("span");
+  label.className = "lot-cluster-label";
+  label.textContent = count === 1 ? "lot" : "lots";
+  bubble.append(value, label);
+  button.append(bubble);
+
+  if (rangeText) {
+    const range = document.createElement("span");
+    range.className = "lot-cluster-range";
+    range.textContent = rangeText;
+    button.append(range);
+  }
+  return button;
 }
 
 function lotMarker(property: Property): HTMLButtonElement {

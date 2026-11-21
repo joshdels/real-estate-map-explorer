@@ -186,6 +186,20 @@ export class BoundaryService {
     return collection.features.find((item) => item.properties.code === regionCode);
   }
 
+  /** Overall bounds of every region as [west, south, east, north], for the first-load frame. */
+  async countryBounds(): Promise<[number, number, number, number]> {
+    const collection = await this.regions();
+    let west = Infinity, south = Infinity, east = -Infinity, north = -Infinity;
+    for (const feature of collection.features) {
+      const [fw, fs, fe, fn] = featureBounds(feature);
+      if (fw < west) west = fw;
+      if (fs < south) south = fs;
+      if (fe > east) east = fe;
+      if (fn > north) north = fn;
+    }
+    return [west, south, east, north];
+  }
+
   /** Outline of one province or city/municipality, for drawing on the map. */
   async outline(provinceCode: string, cityCode?: string): Promise<BoundaryFeature | undefined> {
     const collection = cityCode
