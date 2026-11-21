@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Buildings, MapPinLine, MapTrifold } from "@phosphor-icons/react";
+import { ArrowRight, Buildings, MapPinLine, UsersThree } from "@phosphor-icons/react";
 import { brand } from "@/lib/brand";
 import {
   KIND_LABELS,
@@ -14,6 +14,7 @@ import type { Property } from "@/lib/types";
 import { AreaSearch } from "@/components/listings/area-search";
 import { ListingCard, Stars } from "@/components/listings/listing-card";
 import { useDataset } from "@/hooks/use-dataset";
+import { RegionMapSelector } from "@/components/home/region-map-selector";
 
 export function HomePage() {
   const { data } = useDataset();
@@ -51,29 +52,38 @@ export function HomePage() {
       </section>
 
       <section className="page-section" aria-labelledby="audience-title">
-        <p className="section-kicker">Made for land sales</p>
-        <h2 id="audience-title">What do you want to do?</h2>
+        <div className="section-heading">
+          <div>
+            <p className="section-kicker">Who we serve</p>
+            <h2 id="audience-title">One clear view of land, from first search to the next development</h2>
+            <p className="section-lead">Find individual lots, present land for sale, or compare sites for a larger acquisition and expansion plan.</p>
+          </div>
+        </div>
         <div className="lane-grid">
           <article className="lane">
-            <MapTrifold className="lane-icon" aria-hidden="true" />
-            <h3>Buyers</h3>
-            <p>Choose a place. Compare lot size, price, roads, and nearby places before you visit.</p>
-            <a className="lane-link" href="/explore">Explore the map <ArrowRight aria-hidden="true" /></a>
+            <MapPinLine className="lane-icon" aria-hidden="true" />
+            <h3>Land buyers</h3>
+            <p>Search by place, compare mapped lot shapes and prices, and review the details before contacting a provider.</p>
+            <a className="lane-link" href="/explore">Explore lots <ArrowRight aria-hidden="true" /></a>
           </article>
           <article className="lane">
-            <MapPinLine className="lane-icon" aria-hidden="true" />
-            <h3>Owners and sellers</h3>
-            <p>Mark your lot on the map. Add the price, details, and photos. Publish when ready.</p>
-            <a className="lane-link" href="/list-property">List your land <ArrowRight aria-hidden="true" /></a>
+            <UsersThree className="lane-icon" aria-hidden="true" />
+            <h3>Owners and brokers</h3>
+            <p>Present the boundary, price, access, utilities, photos, and availability buyers need to understand your land.</p>
+            <a className="lane-link" href="/list-property">List your lot <ArrowRight aria-hidden="true" /></a>
           </article>
           <article className="lane">
             <Buildings className="lane-icon" aria-hidden="true" />
-            <h3>Brokers and developers</h3>
-            <p>Group lots, feature key listings, and build trust through buyer reviews.</p>
-            <Link className="lane-link" href="/become-a-provider">Become a Provider <ArrowRight aria-hidden="true" /></Link>
+            <h3>Developers and land teams</h3>
+            <p>Compare sites for land acquisition, organize related lots, and present an illustrative masterplan for phased sales or expansion.</p>
+            <Link className="lane-link" href="/providers">View provider plans <ArrowRight aria-hidden="true" /></Link>
           </article>
         </div>
       </section>
+
+      <div className="page-section">
+        <RegionMapSelector />
+      </div>
 
       <section className="page-section page-section-tint" aria-labelledby="suggested-title">
         <div className="section-heading">
@@ -145,8 +155,6 @@ export function HomePage() {
           <li><strong>Support when you need it</strong><span>Our staff can help prepare a listing and review reports so land information stays useful.</span></li>
         </ol>
       </section>
-
-      <p className="sample-band" role="note">{brand.sampleNotice}</p>
     </>
   );
 }

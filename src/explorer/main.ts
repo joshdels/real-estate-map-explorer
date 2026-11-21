@@ -7,11 +7,12 @@ import { MediaViewer } from "@/explorer/media-viewer";
 import { createRepository } from "@/lib/repositories/factory";
 import { PropertyStore } from "@/lib/store";
 import type { Feature } from "geojson";
-import { boundaries, type BoundaryIndex } from "@/lib/geo/boundaries";
+import { boundaries, featureBounds, type BoundaryIndex } from "@/lib/geo/boundaries";
 import {
   areaLabel,
   filterListings,
   formatPrice,
+  listingsInBounds,
   providerRatings,
   type ListingCriteria,
   type ListingSort,
@@ -49,10 +50,7 @@ async function start(): Promise<void> {
   const listingPortal: {
     current?: ReturnType<typeof setupListingPortal>;
   } = {};
-  // Clicking a marker goes straight to the full property detail page.
-  const map = new MapController((property) => {
-    window.location.href = `/property/${encodeURIComponent(property.id)}`;
-  });
+  const map = new MapController();
   const admin = new AdminConsole(
     store,
     map,
@@ -77,6 +75,7 @@ async function start(): Promise<void> {
     admin.requestAccess();
   }
   const deepLinkId = query.get("property");
+  let deepLinkProperty: Property | undefined;
   if (deepLinkId) {
     const match = store
       .snapshot()
@@ -86,11 +85,12 @@ async function start(): Promise<void> {
       listingPortal.current?.showMap();
       listingPortal.current?.select(match.id);
       listingPortal.current?.scrollToCard(match.id);
-      map.focus(match);
+      deepLinkProperty = match;
     }
   }
   await Promise.all([map.whenReady(), listingPortal.current.areaReady]);
   finishLoading();
+  if (deepLinkProperty) map.openPreview(deepLinkProperty);
   window.addEventListener("keydown", (event) => {
     if (event.key === "ArrowLeft" && !qs<HTMLElement>("#media-dialog").hidden)
       media.nextGallery(-1);
@@ -138,6 +138,7 @@ function setupListingPortal(
   let index: BoundaryIndex | undefined;
   // The map is hidden in list view, so framing waits until it is visible.
   let pendingFrame: (() => void) | undefined;
+  let filteredProperties: Property[] = [];
 
   const mapVisible = () => document.body.classList.contains("show-map-view");
   const frame = (action: () => void) => {
@@ -165,8 +166,14 @@ function setupListingPortal(
       const action = pendingFrame;
       pendingFrame = undefined;
       // Wait for the resize so the bounds are fitted to the real map size.
-      if (action) requestAnimationFrame(() => requestAnimationFrame(action));
-    } else panel.scrollTo({ top: 0, behavior: "smooth" });
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (action) action();
+        renderCards();
+      }));
+    } else {
+      panel.scrollTo({ top: 0, behavior: "smooth" });
+      renderCards();
+    }
   };
 
   const criteria = (): ListingCriteria => ({
@@ -183,37 +190,98 @@ function setupListingPortal(
     sort: sort.value as ListingSort,
   });
 
-  const render = (nextData: Dataset = data) => {
-    data = nextData;
-    const properties = filterListings(data, criteria());
-    const ratings = providerRatings(data.reviews);
-    const providers = new Map(data.providers.map((item) => [item.id, item]));
-    list.replaceChildren(
-      ...properties.map((property) =>
-        propertyCard(property, {
-          provider: providers.get(property.providerId ?? ""),
-          rating: ratings.get(property.providerId ?? ""),
-          onShare: async () => {
-            note.textContent = await shareListing(
-              property.id,
-              property.title,
-              areaLabel(property),
-            );
-          },
-          onReport: (reason) => {
-            onReport(property, reason);
-            note.textContent = `Thank you. ${property.title} was flagged for staff review.`;
-          },
-        }),
-      ),
-    );
-    // Keep the map in step with the list: only matching listings get markers.
-    map.render({ ...data, properties });
-    count.textContent = `${properties.length} ${properties.length === 1 ? "lot" : "lots"}`;
+  // Render the list in pages and reveal more as the panel scrolls near the
+  // bottom. This keeps the DOM small so a large dataset stays responsive.
+  const PAGE_SIZE = 12;
+  let pageProperties: Property[] = [];
+  let renderedCount = 0;
+  let ratingsMap = providerRatings(data.reviews);
+  let providersMap = new Map(data.providers.map((item) => [item.id, item]));
+  const sentinel = document.createElement("div");
+  sentinel.className = "property-list-sentinel";
+  sentinel.setAttribute("aria-hidden", "true");
+
+  const buildCard = (property: Property) => {
+    const card = propertyCard(property, {
+      provider: providersMap.get(property.providerId ?? ""),
+      rating: ratingsMap.get(property.providerId ?? ""),
+      onShare: async () => {
+        note.textContent = await shareListing(
+          property.id,
+          property.title,
+          areaLabel(property),
+        );
+      },
+      onReport: (reason) => {
+        onReport(property, reason);
+        note.textContent = `Thank you. ${property.title} was flagged for staff review.`;
+      },
+    });
+    // Hovering a card highlights its map marker, so the two views stay linked.
+    card.addEventListener("pointerenter", () => map.peek(property.id));
+    card.addEventListener("pointerleave", () => map.peek(null));
+    return card;
+  };
+
+  const appendNextPage = () => {
+    const next = pageProperties.slice(renderedCount, renderedCount + PAGE_SIZE);
+    if (next.length === 0) return;
+    const fragment = document.createDocumentFragment();
+    next.forEach((property) => fragment.append(buildCard(property)));
+    list.insertBefore(fragment, sentinel);
+    renderedCount += next.length;
+    if (renderedCount >= pageProperties.length) pageObserver.unobserve(sentinel);
+  };
+
+  const pageObserver = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) appendNextPage();
+    },
+    { root: panel, rootMargin: "500px 0px" },
+  );
+
+  // Render pages until the card for this id exists (for deep links and selection).
+  const ensureRendered = (propertyId: string) => {
+    while (
+      renderedCount < pageProperties.length &&
+      !pageProperties.slice(0, renderedCount).some((item) => item.id === propertyId)
+    ) {
+      appendNextPage();
+    }
+  };
+
+  const renderCards = () => {
+    const properties = mapVisible()
+      ? listingsInBounds(filteredProperties, map.viewportBounds())
+      : filteredProperties;
+    ratingsMap = providerRatings(data.reviews);
+    providersMap = new Map(data.providers.map((item) => [item.id, item]));
+    pageProperties = properties;
+    renderedCount = 0;
+    pageObserver.unobserve(sentinel);
+    list.replaceChildren(sentinel);
+    list.removeAttribute("aria-busy");
+    appendNextPage();
+    if (renderedCount < pageProperties.length) pageObserver.observe(sentinel);
+    count.textContent = mapVisible()
+      ? `${properties.length} ${properties.length === 1 ? "lot" : "lots"} in this map area`
+      : `${properties.length} ${properties.length === 1 ? "lot" : "lots"}`;
     empty.hidden = properties.length > 0;
   };
 
+  const render = (nextData: Dataset = data) => {
+    data = nextData;
+    filteredProperties = filterListings(data, criteria());
+    // Filters control the available markers. The side list is narrowed further
+    // by the current map bounds without removing off-screen markers.
+    map.render({ ...data, properties: filteredProperties });
+    renderCards();
+  };
+
+  map.onViewportChange(renderCards);
+
   const select = (propertyId: string) => {
+    ensureRendered(propertyId);
     list.querySelectorAll<HTMLElement>("[data-property-id]").forEach((card) => {
       const selected = card.dataset.propertyId === propertyId;
       card.classList.toggle("is-selected", selected);
@@ -259,11 +327,32 @@ function setupListingPortal(
     const cityEntry = index.cities.find((item) => item.code === city.value);
     const target = cityEntry ?? provinceEntry;
     if (!target || !provinceEntry) {
-      areaStatus.textContent = "";
-      frame(() => {
-        map.showArea();
-        map.showAll();
-      });
+      // No province picked: outline the whole region when one is selected.
+      const regionEntry = index.regions.find((item) => item.code === region.value);
+      if (!regionEntry) {
+        areaStatus.textContent = "";
+        frame(() => {
+          map.showArea();
+          map.showAll();
+        });
+        return;
+      }
+      areaStatus.textContent = `Showing listings inside ${regionEntry.name}. Outline is simplified, not a surveyed boundary.`;
+      try {
+        const outline = await boundaries.regionOutline(regionEntry.code);
+        // Ignore the result if the selection changed while the outline loaded.
+        if (region.value !== regionEntry.code || province.value) return;
+        if (!outline) {
+          frame(() => {
+            map.showArea();
+            map.showAll();
+          });
+          return;
+        }
+        frame(() => map.showArea(outline as Feature, featureBounds(outline)));
+      } catch {
+        areaStatus.textContent = `Showing listings inside ${regionEntry.name}. The outline could not be loaded.`;
+      }
       return;
     }
     areaStatus.textContent = `Showing listings inside ${target.name}. Outline is simplified, not a surveyed boundary.`;
@@ -326,6 +415,7 @@ function setupListingPortal(
   qs("#view-list-button").addEventListener("click", () => showView("list"));
   qs("#view-map-button").addEventListener("click", () => showView("map"));
   const scrollToCard = (propertyId: string) => {
+    ensureRendered(propertyId);
     const card = list.querySelector<HTMLElement>(
       `[data-property-id="${CSS.escape(propertyId)}"]`,
     );
@@ -383,6 +473,8 @@ function setupListingPortal(
 }
 
 function finishLoading(): void {
+  const hint = document.querySelector<HTMLElement>("#map-loading-hint");
+  if (hint) hint.hidden = true;
   const loading = document.querySelector<HTMLElement>("#explorer-loading");
   if (!loading || loading.classList.contains("is-leaving")) return;
   loading.classList.add("is-leaving");

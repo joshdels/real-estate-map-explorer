@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Flag } from "@phosphor-icons/react";
-import { useState } from "react";
+import { Flag, MagnifyingGlass } from "@phosphor-icons/react";
+import { useMemo, useState } from "react";
 import {
   KIND_LABELS,
   formatRating,
@@ -18,14 +18,46 @@ import { useDataset } from "@/hooks/use-dataset";
 export function ProvidersDirectory() {
   const { data } = useDataset();
   const ranked = rankedProviders(data);
+  const [query, setQuery] = useState("");
+
+  const results = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    if (!term) return ranked;
+    return ranked.filter(({ provider }) =>
+      [provider.name, KIND_LABELS[provider.kind], provider.serviceArea, provider.tagline]
+        .filter(Boolean)
+        .some((field) => field!.toLowerCase().includes(term)),
+    );
+  }, [ranked, query]);
+
   return (
     <section className="page-section" aria-labelledby="directory-title">
       <p className="section-kicker">Land sellers</p>
       <h1 id="directory-title">Owners, brokers, and developers</h1>
       <p className="section-lead">People and businesses offering lot plans and open development land, ordered by buyer reviews. Ratings come from visitor reviews and are not a licence check.</p>
+      <div className="provider-search">
+        <label className="provider-search-field">
+          <span className="sr-only">Search providers by name, type, or area</span>
+          <MagnifyingGlass aria-hidden="true" />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by name, type, or area"
+            autoComplete="off"
+          />
+        </label>
+        <p className="provider-search-count" role="status" aria-live="polite">
+          {results.length} {results.length === 1 ? "seller" : "sellers"}
+          {query.trim() ? ` matching "${query.trim()}"` : ""}
+        </p>
+      </div>
       {ranked.length === 0 ? <p className="empty-state">No land sellers have joined yet.</p> : null}
+      {ranked.length > 0 && results.length === 0 ? (
+        <p className="empty-state">No sellers match your search. Try a different name or area.</p>
+      ) : null}
       <div className="provider-grid">
-        {ranked.map(({ provider, rating, listings }) => (
+        {results.map(({ provider, rating, listings }) => (
           <Link key={provider.id} className="provider-card" href={`/providers/${encodeURIComponent(provider.id)}`}>
             <span className="provider-avatar" aria-hidden="true">{provider.name.replace(/^Sample\s+/i, "").slice(0, 2).toUpperCase()}</span>
             <strong>{provider.name}</strong>

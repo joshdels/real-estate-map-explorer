@@ -149,7 +149,11 @@ export interface Agent {
   role?: string;
   phoneDisplay?: string;
   phoneHref?: string;
+  email?: string;
+  facebookUrl?: string;
   messengerUrl?: string;
+  /** Short line of credentials, e.g. "Licensed broker, 10+ years". */
+  tagline?: string;
 }
 
 export interface Dataset {

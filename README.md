@@ -8,8 +8,8 @@ A Next.js App Router + TypeScript application for an open-data Philippine land m
 
 | Route | Who it is for | What it does |
 | --- | --- | --- |
-| `/` | Everyone | Brand and positioning, area search, paths for buyers / owners / brokers, suggested listings, and top providers |
-| `/explore` | Buyers | Satellite map by default, with a switch to the lot-plan index. Filter by region, province, city, price, status, and keyword. Sort by recommended, newest, or price. Each card has **Share** and **Report** |
+| `/` | Everyone | Brand and positioning, area search, a static region map for finding land, suggested listings, and top providers |
+| `/explore` | Buyers | Satellite map by default, with a switch to the lot-plan index. Marker clicks open a compact preview without moving the map, and the side results follow the visible map area. Filter by region, province, city, price, status, and keyword. Sort by recommended, newest, or price. Each card has **Share** and **Report** |
 | `/list-property` | Clients and staff | Focused split workspace with the map and approximate lot-boundary drawing on the left and the validated land listing form on the right |
 | `/become-a-provider` | Owners, brokers, and developers | Positions the provider as the expert and links to profile setup and listing creation |
 | `/property/[id]` | Buyers | Lot-plan imagery, lot size, intended land use, terrain, road access, seller and rating, official area, media, mini map, share and report. Opening a lot shows immediate loading progress |
@@ -23,7 +23,7 @@ A Next.js App Router + TypeScript application for an open-data Philippine land m
 
 ### Official area search
 
-`public/data/boundaries/` holds a simplified copy of the PSA / NAMRIA administrative boundaries (17 regions, 88 provinces, 1,642 cities and municipalities, about 4 MB). A listing's region, province, and city are found from its map pins when it is created. Selecting an area filters the list and the markers and draws the outline on the map. Rebuild with:
+`public/data/boundaries/` holds a simplified copy of the PSA / NAMRIA administrative boundaries (17 regions, 88 provinces, 1,642 cities and municipalities, about 4 MB). The homepage uses a separate lightweight region layer that keeps only the region code and name. A listing's region, province, and city are found from its map pins when it is created. Selecting an area filters the list and the markers and draws the outline on the map. Rebuild with:
 
 ```bash
 scripts/build-boundaries.sh /path/to/boundary-shapefiles   # needs GDAL and Node 22+
@@ -60,6 +60,8 @@ The interface uses the MIT-licensed Phosphor icon family. React surfaces import 
 Reusable buttons, loaders, and skeletons use Mantine. Its theme is set in `src/components/ui/app-ui.tsx`, while product colors and motion stay in `src/styles/`. Update `@mantine/core` and `@mantine/hooks` together, then run the full checks below.
 
 The homepage hero uses the generated aerial land image at `public/images/hero-open-lots.webp` under a dark indigo overlay. The explorer shows an animated loading screen until the dataset, area list, and first map render are ready. Property links use the same aerial treatment and progress bar while the lot detail route opens.
+
+Error pages share that hero treatment. `src/components/layout/error-scene.tsx` is the branded surface (large code number, short message, a Back to homepage and an Explore lots action); `app/not-found.tsx` handles unmatched URLs (404), `app/error.tsx` handles runtime errors in a page (500, with Try again), and `app/global-error.tsx` is the self-contained fallback for a root-layout failure.
 
 ## Development
 

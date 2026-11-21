@@ -9,8 +9,8 @@ Imperative browser modules behind `/explore`. Adds to the root and `src/AGENTS.m
 
 ## Rules
 
-- Filtering and ranking come from `@/lib/listings`; the portal passes the filtered list to `map.render()` so markers always match the list.
-- `MapController.select()` fires the navigation callback; `focus()` only frames and highlights. Use `focus()` for programmatic selection.
+- Filtering, ranking, and viewport bounds checks come from `@/lib/listings`. Filter-matching listings become markers; the side list is narrowed further to the visible map bounds.
+- Marker clicks open a preview without moving the camera. `focus()` frames and highlights only for programmatic selection such as a deep link.
 - The map is hidden in list view. Queue framing with the portal's `frame()` helper instead of calling `fitBounds` on a hidden map.
 - Accepted URL parameters: `q`, `region`, `province`, `city`, `purpose`, `type`, `sort`, `view=map`, `view=list`, `property=<id>`, `workspace`. The map is the default view.
 - `initializeApp()` runs once per page load. Navigation into and out of `/explore` must be a full page load.

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { DeviceMobile, Drop, Lightning, SealCheck, TelevisionSimple, WifiHigh } from "@phosphor-icons/react";
+import { DeviceMobile, Drop, Lightning, RoadHorizon, SealCheck, TelevisionSimple, WifiHigh } from "@phosphor-icons/react";
 import { ListingTools, Stars } from "@/components/listings/listing-card";
 import { useDataset } from "@/hooks/use-dataset";
 import {
@@ -12,14 +12,16 @@ import {
   providerRatings,
 } from "@/lib/listings";
 import { PropertyMedia } from "@/components/property/property-media";
-import { PropertyMiniMap } from "@/components/property/property-mini-map";
+import { PropertyNearby } from "@/components/property/property-nearby";
+import { AgentContactCard } from "@/components/property/agent-contact-card";
 
 function UtilityIcon({ name }: { name: string }) {
   const key = name.toLocaleLowerCase();
   if (key.includes("electric")) return <Lightning aria-hidden="true" />;
   if (key.includes("water")) return <Drop aria-hidden="true" />;
+  if (key.includes("road") || key.includes("access")) return <RoadHorizon aria-hidden="true" />;
+  if (key.includes("internet") || key.includes("wifi") || key.includes("telecom")) return <WifiHigh aria-hidden="true" />;
   if (key.includes("mobile") || key.includes("cell")) return <DeviceMobile aria-hidden="true" />;
-  if (key.includes("internet") || key.includes("wifi")) return <WifiHigh aria-hidden="true" />;
   return <TelevisionSimple aria-hidden="true" />;
 }
 
@@ -83,6 +85,7 @@ export function PropertyView({ id }: { id: string }) {
       ) : null}
 
       <div className="detail-page-grid">
+        <div className="detail-main">
         <section className="detail-gallery" aria-label="Lot photos">
           {images.length > 0 ? (
             <>
@@ -98,8 +101,45 @@ export function PropertyView({ id }: { id: string }) {
               ) : null}
             </>
           ) : null}
-          {suppliedImages.length === 0 ? <p className="detail-gallery-disclosure">Illustrative sample lot plan. Not a surveyed plan or photo of this listing.</p> : null}
         </section>
+
+        {property.description ? (
+          <section className="detail-block">
+            <h2>Land details</h2>
+            <p>{property.description}</p>
+          </section>
+        ) : null}
+
+        {utilities.length > 0 ? (
+          <section className="detail-block">
+            <h2>Utilities available</h2>
+            <dl className="detail-utilities">
+              {utilities.map(([name, value]) => (
+                <div key={name}>
+                  <UtilityIcon name={name} />
+                  <div><dt>{name}</dt><dd>{value}</dd></div>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ) : null}
+
+        <section className="detail-block">
+          <h2>Location and nearby</h2>
+          {area ? (
+            <p className="detail-note">
+              {[area.city, area.province, area.region].filter(Boolean).join(" · ")}
+              {area.approximate ? " (nearest official area to the pin)" : ""}
+            </p>
+          ) : null}
+          <PropertyNearby id={property.id} coordinates={property.coordinates} polygon={property.polygon} />
+          <p className="detail-note">
+            Approximate lot plan and satellite location. This is open listing data,
+            not a surveyed boundary. This fictional sample must be independently
+            verified.
+          </p>
+        </section>
+        </div>
 
         <aside className="detail-summary">
           <p className="detail-kicker">
@@ -135,44 +175,7 @@ export function PropertyView({ id }: { id: string }) {
         </aside>
       </div>
 
-      <div className="detail-page-body">
-        {property.description ? (
-          <section className="detail-block">
-            <h2>Land details</h2>
-            <p>{property.description}</p>
-          </section>
-        ) : null}
-
-        {utilities.length > 0 ? (
-          <section className="detail-block">
-            <h2>Utilities available</h2>
-            <dl className="detail-utilities">
-              {utilities.map(([name, value]) => (
-                <div key={name}>
-                  <UtilityIcon name={name} />
-                  <div><dt>{name}</dt><dd>{value}</dd></div>
-                </div>
-              ))}
-            </dl>
-          </section>
-        ) : null}
-
-        <section className="detail-block">
-          <h2>Location</h2>
-          {area ? (
-            <p className="detail-note">
-              {[area.city, area.province, area.region].filter(Boolean).join(" · ")}
-              {area.approximate ? " (nearest official area to the pin)" : ""}
-            </p>
-          ) : null}
-          <PropertyMiniMap coordinates={property.coordinates} polygon={property.polygon} />
-          <p className="detail-note">
-            Approximate lot plan and satellite location. This is open listing data,
-            not a surveyed boundary. This fictional sample must be independently
-            verified.
-          </p>
-        </section>
-      </div>
+      <AgentContactCard agent={data.agent} />
     </>
   );
 }

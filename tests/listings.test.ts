@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   filterListings,
+  formatCompactPrice,
   formatPrice,
+  listingsInBounds,
   providerRatings,
   rankedProviders,
   recentListings,
@@ -116,6 +118,34 @@ describe("listing filters", () => {
   it("formats rent as a monthly price", () => {
     expect(formatPrice({ price: 25_000, purpose: "rent" })).toBe("₱25,000 / month");
     expect(formatPrice({ price: 2_500_000, purpose: "sale" })).toBe("₱2,500,000");
+  });
+  it("keeps map marker prices compact", () => {
+    expect(formatCompactPrice({ price: 25_000, purpose: "rent" })).toBe("₱25K/mo");
+    expect(formatCompactPrice({ price: 2_500_000, purpose: "sale" })).toBe("₱2.5M");
+    expect(formatCompactPrice({ price: 950, purpose: "sale" })).toBe("₱950");
+  });
+
+  it("limits map results to listing points inside the viewport", () => {
+    const properties = [
+      listing("inside", { coordinates: [10, 123] }),
+      listing("outside", { coordinates: [12, 125] }),
+    ];
+    expect(listingsInBounds(properties, {
+      west: 122,
+      south: 9,
+      east: 124,
+      north: 11,
+    }).map((property) => property.id)).toEqual(["inside"]);
+  });
+
+  it("supports map bounds that cross the antimeridian", () => {
+    const property = listing("near-antimeridian", { coordinates: [10, 179] });
+    expect(listingsInBounds([property], {
+      west: 170,
+      south: 0,
+      east: -170,
+      north: 20,
+    })).toEqual([property]);
   });
 });
 

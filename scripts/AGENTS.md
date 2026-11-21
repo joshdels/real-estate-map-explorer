@@ -2,7 +2,7 @@
 
 Data tooling. Adds to the root `AGENTS.md`. See the `boundaries` skill for the full workflow.
 
-- `build-boundaries.sh <shapefile dir>` — simplifies the PSA / NAMRIA shapefiles (`phl_admin2`, `phl_admin3`) with GDAL and writes `public/data/boundaries/` through `build-boundary-index.mjs`.
+- `build-boundaries.sh <shapefile dir>` — simplifies the PSA / NAMRIA shapefiles (`phl_admin1`, `phl_admin2`, `phl_admin3`) with GDAL and writes `public/data/boundaries/` through `build-boundary-index.mjs`. The region layer keeps only its code and name for the lightweight homepage selector.
 - `load-boundaries-db.sh <shapefile dir>` — loads regions, provinces, and cities into PostGIS. Needs `SUPABASE_DB_URL` in the environment and the `20261115000000` migration applied.
 
 ## Rules

@@ -11,18 +11,8 @@ export function MapExplorer({ workspaceMode = false }: { workspaceMode?: boolean
   return (
     <>
   <main className={`app-shell${workspaceMode ? " listing-workspace-shell" : ""}`} aria-label={workspaceMode ? `${brand.name} lot listing workspace` : `${brand.name} map explorer`}>
-    <div id="explorer-loading" className="explorer-loading" role="status" aria-live="polite" aria-label="Loading the map and lot listings">
-      <div className="explorer-loading-card">
-        <div className="loading-map-mark" aria-hidden="true">
-          <span></span><span></span><span></span><span></span>
-          <i className="ph ph-map-pin" />
-        </div>
-        <p className="eyebrow">Preparing your map</p>
-        <strong>Loading lots and locations</strong>
-        <div className="loading-progress" aria-hidden="true"><span></span></div>
-        <small>This may take a moment.</small>
-      </div>
-    </div>
+    <div id="explorer-loading" className="explorer-loading" role="status" aria-live="polite" aria-label="Loading the map and lot listings" />
+    <span id="map-loading-hint" className="map-loading-hint" role="status" aria-hidden="false">Loading the map…</span>
     <header className="site-header">
       {/* Plain anchors on purpose: src/main.ts attaches once per page load, so
           leaving and re-entering the explorer must be a full navigation. */}
@@ -79,7 +69,18 @@ export function MapExplorer({ workspaceMode = false }: { workspaceMode?: boolean
         </div>
         <p className="recommended-note">“Recommended” ranks listings by the review rating of the provider, then by staff review and recency.</p>
         <p id="listing-action-note" className="sr-only" role="status" aria-live="polite"></p>
-        <div id="property-list" className="property-list" aria-live="polite"></div>
+        <div id="property-list" className="property-list" aria-live="polite" aria-busy="true">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="property-card-skeleton" aria-hidden="true">
+              <div className="property-card-skeleton-media" />
+              <div className="property-card-skeleton-lines">
+                <span className="skeleton-line skeleton-line-lg" />
+                <span className="skeleton-line skeleton-line-md" />
+                <span className="skeleton-line skeleton-line-sm" />
+              </div>
+            </div>
+          ))}
+        </div>
         <p id="property-list-empty" className="property-list-empty" hidden>No lots match this search. Try another place or filter.</p>
         <p className="sample-disclosure">{brand.sampleNotice} {brand.boundaryCredit} Satellite imagery © Esri.</p>
       </section>
@@ -146,11 +147,10 @@ export function MapExplorer({ workspaceMode = false }: { workspaceMode?: boolean
         <section data-admin-view="utilities" hidden>
           <form id="utilities-form" className="admin-form">
             <h2><i className="ph ph-lightning" aria-hidden="true" /> Utility services</h2><p className="form-help">Comma-separated options are applied to newly created lot listings.</p>
-            <label>Electricity options<input name="Electricity" placeholder="ESAMELCO, No Power Line" /></label>
-            <label>Water options<input name="Water" placeholder="Deepwell, NAWASA" /></label>
-            <label>Mobile options<input name="Mobile" placeholder="Smart, Globe" /></label>
-            <label>Internet options<input name="Internet" placeholder="PLDT, Smart, Netcamp" /></label>
-            <label>Cable options<input name="Cable" placeholder="Amboy" /></label>
+            <label>Electricity options<input name="Electricity" placeholder="Sample Provincial Electric Cooperative, Solar-ready" /></label>
+            <label>Water options<input name="Water" placeholder="Sample City Water District, Deepwell" /></label>
+            <label>Internet and mobile options<input name="Internet and mobile" placeholder="Sample FiberOne, Mobile data only" /></label>
+            <label>Road access options<input name="Road access" placeholder="Concrete public road, Gravel access road" /></label>
             <button className="save-button" type="submit">Save utility options</button>
           </form>
         </section>

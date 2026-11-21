@@ -23,6 +23,13 @@ export interface ListingCriteria {
   sort?: ListingSort;
 }
 
+export interface ListingBounds {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+}
+
 export interface ProviderRating {
   average: number;
   count: number;
@@ -53,6 +60,35 @@ const peso = new Intl.NumberFormat("en-PH", {
 
 export function formatPrice(property: Pick<Property, "price" | "purpose">): string {
   return `${peso.format(property.price)}${property.purpose === "rent" ? " / month" : ""}`;
+}
+
+/** Short price label for dense map markers. Full prices remain visible in cards and popups. */
+export function formatCompactPrice(
+  property: Pick<Property, "price" | "purpose">,
+): string {
+  const { price } = property;
+  const divisor = price >= 1_000_000 ? 1_000_000 : price >= 1_000 ? 1_000 : 1;
+  const suffix = divisor === 1_000_000 ? "M" : divisor === 1_000 ? "K" : "";
+  const scaled = price / divisor;
+  const amount = scaled >= 100 || Number.isInteger(scaled)
+    ? String(Math.round(scaled))
+    : scaled.toFixed(1).replace(/\.0$/, "");
+  return `₱${amount}${suffix}${property.purpose === "rent" ? "/mo" : ""}`;
+}
+
+/** Listings whose representative point falls inside the current map view. */
+export function listingsInBounds(
+  properties: Property[],
+  bounds: ListingBounds,
+): Property[] {
+  return properties.filter((property) => {
+    const [latitude, longitude] = property.coordinates;
+    const withinLatitude = latitude >= bounds.south && latitude <= bounds.north;
+    const withinLongitude = bounds.west <= bounds.east
+      ? longitude >= bounds.west && longitude <= bounds.east
+      : longitude >= bounds.west || longitude <= bounds.east;
+    return withinLatitude && withinLongitude;
+  });
 }
 
 /** Suspended listings never appear on public surfaces. */

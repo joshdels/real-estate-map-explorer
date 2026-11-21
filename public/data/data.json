@@ -1,7 +1,7 @@
 {
   "metadata": {
     "name": "Open Lot Plans sample dataset",
-    "version": 3,
+    "version": 5,
     "isSample": true,
     "notice": "Lot plans, sellers, reviews, prices, coordinates, boundaries, routes, and availability are fictional sample content and must be verified."
   },
@@ -11,27 +11,35 @@
     "role": "Land Specialist",
     "phoneDisplay": "0928 535 4832",
     "phoneHref": "+639285354832",
-    "messengerUrl": "https://www.messenger.com/"
+    "messengerUrl": "https://www.messenger.com/",
+    "email": "eric.costuna@sample-openlotplans.ph",
+    "facebookUrl": "https://www.facebook.com/",
+    "tagline": "Sample land specialist. For demo contact only."
   },
   "utilities": {
     "Electricity": [
-      "Eastern Regional Electric",
-      "Solar-ready"
+      "Sample Davao Light & Power Co.",
+      "Sample Visayan Electric",
+      "Sample Provincial Electric Cooperative",
+      "Solar-ready, grid line nearby"
     ],
     "Water": [
-      "Municipal Water",
-      "Deepwell"
+      "Sample City Water District",
+      "Deepwell (artesian)",
+      "Spring source",
+      "No water line yet"
     ],
-    "Mobile": [
-      "CellOne",
-      "Sample Mobile"
+    "Internet and mobile": [
+      "Sample FiberOne, strong mobile signal",
+      "Sample Broadband, fair mobile signal",
+      "Mobile data only",
+      "No coverage yet"
     ],
-    "Internet": [
-      "FiberLink",
-      "Sample Broadband"
-    ],
-    "Cable": [
-      "Community Cable"
+    "Road access": [
+      "Concrete public road, with drainage",
+      "Paved barangay road, open canal drainage",
+      "Gravel access road, natural drainage",
+      "Right of way, no built road yet"
     ]
   },
   "properties": [
@@ -70,11 +78,10 @@
       "terrain": "Level",
       "roadAccess": "Paved local road along the south boundary",
       "utilities": {
-        "Electricity": "Eastern Regional Electric",
-        "Water": "Municipal Water, Deepwell",
-        "Mobile": "CellOne, Sample Mobile",
-        "Internet": "FiberLink",
-        "Cable": "Community Cable"
+        "Electricity": "Sample Davao Oriental Electric Cooperative",
+        "Water": "Sample Mati City Water District",
+        "Internet and mobile": "Sample FiberOne, strong mobile signal",
+        "Road access": "Concrete public road, with roadside drainage"
       },
       "media": {
         "panoramaUrl": "https://pannellum.org/images/alma.jpg",
@@ -135,11 +142,10 @@
       "terrain": "Level",
       "roadAccess": "Two-sided local road frontage",
       "utilities": {
-        "Electricity": "Eastern Regional Electric",
-        "Water": "Municipal Water",
-        "Mobile": "CellOne",
-        "Internet": "Sample Broadband",
-        "Cable": "Community Cable"
+        "Electricity": "Sample Davao Oriental Electric Cooperative",
+        "Water": "Deepwell (artesian)",
+        "Internet and mobile": "Sample Broadband, fair mobile signal",
+        "Road access": "Gravel access road, natural drainage"
       },
       "media": {
         "panoramaUrl": "https://pannellum.org/images/alma.jpg",
@@ -197,11 +203,10 @@
       "terrain": "Gently sloping",
       "roadAccess": "Local road access near the east boundary",
       "utilities": {
-        "Electricity": "Solar-ready",
-        "Water": "Deepwell",
-        "Mobile": "Sample Mobile",
-        "Internet": "FiberLink",
-        "Cable": "Not specified"
+        "Electricity": "Sample Davao Oriental Electric Cooperative",
+        "Water": "Sample Mati City Water District",
+        "Internet and mobile": "Sample FiberOne, fair mobile signal",
+        "Road access": "Paved barangay road, open canal drainage"
       },
       "media": {
         "panoramaUrl": "https://pannellum.org/images/alma.jpg",
@@ -259,11 +264,10 @@
       "terrain": "Level",
       "roadAccess": "Paved road frontage",
       "utilities": {
-        "Electricity": "Eastern Regional Electric",
-        "Water": "Municipal Water",
-        "Mobile": "CellOne, Sample Mobile",
-        "Internet": "FiberLink, Sample Broadband",
-        "Cable": "Community Cable"
+        "Electricity": "Solar-ready, grid line nearby",
+        "Water": "Deepwell (artesian)",
+        "Internet and mobile": "Mobile data only",
+        "Road access": "Dirt access road, natural drainage"
       },
       "media": {
         "panoramaUrl": "https://pannellum.org/images/alma.jpg",
@@ -321,11 +325,10 @@
       "terrain": "Level",
       "roadAccess": "Local road frontage",
       "utilities": {
-        "Electricity": "Eastern Regional Electric",
-        "Water": "Municipal Water",
-        "Mobile": "CellOne",
-        "Internet": "Sample Broadband",
-        "Cable": "Community Cable"
+        "Electricity": "Sample Davao Oriental Electric Cooperative",
+        "Water": "Sample Mati City Water District",
+        "Internet and mobile": "Sample FiberOne, strong mobile signal",
+        "Road access": "Concrete public road, with roadside drainage"
       },
       "media": {
         "panoramaUrl": "",
@@ -381,11 +384,10 @@
       "terrain": "Level",
       "roadAccess": "Paved city road frontage",
       "utilities": {
-        "Electricity": "Sample Electric Cooperative",
-        "Water": "Municipal Water",
-        "Mobile": "Sample Mobile",
-        "Internet": "Sample Broadband",
-        "Cable": "Not specified"
+        "Electricity": "Sample Visayan Electric",
+        "Water": "Sample Metro Cebu Water District",
+        "Internet and mobile": "Sample FiberOne, strong mobile signal",
+        "Road access": "Concrete public road, with drainage"
       },
       "media": {},
       "purpose": "sale",
@@ -438,11 +440,10 @@
       "terrain": "Level",
       "roadAccess": "Corner frontage on two paved roads",
       "utilities": {
-        "Electricity": "Sample Electric Cooperative",
-        "Water": "Municipal Water",
-        "Mobile": "Sample Mobile",
-        "Internet": "Sample Broadband",
-        "Cable": "Not specified"
+        "Electricity": "Sample Visayan Electric",
+        "Water": "Sample Metro Cebu Water District",
+        "Internet and mobile": "Sample FiberOne, strong mobile signal",
+        "Road access": "Concrete corner lot frontage, with drainage"
       },
       "media": {},
       "purpose": "sale",
@@ -495,11 +496,10 @@
       "terrain": "Level",
       "roadAccess": "Corner lot with paved frontage",
       "utilities": {
-        "Electricity": "Sample Electric Cooperative",
-        "Water": "Municipal Water",
-        "Mobile": "Sample Mobile",
-        "Internet": "Sample Broadband",
-        "Cable": "Not specified"
+        "Electricity": "Sample Iloilo Electric Cooperative",
+        "Water": "Sample Metro Iloilo Water District",
+        "Internet and mobile": "Sample FiberOne, strong mobile signal",
+        "Road access": "Paved diversion road frontage, with drainage"
       },
       "media": {},
       "purpose": "sale",
@@ -551,11 +551,10 @@
       "terrain": "Level to gently sloping",
       "roadAccess": "Neighborhood road frontage",
       "utilities": {
-        "Electricity": "Sample Electric Cooperative",
-        "Water": "Municipal Water",
-        "Mobile": "Sample Mobile",
-        "Internet": "Sample Broadband",
-        "Cable": "Not specified"
+        "Electricity": "Sample Davao Light & Power Co.",
+        "Water": "Sample Davao City Water District",
+        "Internet and mobile": "Sample FiberOne, strong mobile signal",
+        "Road access": "Concrete public road, with drainage"
       },
       "media": {},
       "purpose": "sale",
@@ -607,11 +606,10 @@
       "terrain": "Gently sloping",
       "roadAccess": "Paved ridge road access",
       "utilities": {
-        "Electricity": "Sample Electric Cooperative",
-        "Water": "Municipal Water",
-        "Mobile": "Sample Mobile",
-        "Internet": "Sample Broadband",
-        "Cable": "Not specified"
+        "Electricity": "Sample Cavite Electric Cooperative",
+        "Water": "Sample Tagaytay City Water District",
+        "Internet and mobile": "Sample FiberOne, strong mobile signal",
+        "Road access": "Paved ridge road, with drainage"
       },
       "media": {},
       "purpose": "sale",
@@ -664,11 +662,10 @@
       "terrain": "Sloping",
       "roadAccess": "Shared paved ridge road",
       "utilities": {
-        "Electricity": "Sample Electric Cooperative",
-        "Water": "Municipal Water",
-        "Mobile": "Sample Mobile",
-        "Internet": "Sample Broadband",
-        "Cable": "Not specified"
+        "Electricity": "Sample Cavite Electric Cooperative",
+        "Water": "Sample Tagaytay City Water District",
+        "Internet and mobile": "Sample FiberOne, strong mobile signal",
+        "Road access": "Paved ridge access road, with drainage"
       },
       "media": {},
       "purpose": "sale",
@@ -721,11 +718,10 @@
       "terrain": "Rolling",
       "roadAccess": "Farm road frontage",
       "utilities": {
-        "Electricity": "Sample Electric Cooperative",
-        "Water": "Municipal Water",
-        "Mobile": "Sample Mobile",
-        "Internet": "Sample Broadband",
-        "Cable": "Not specified"
+        "Electricity": "Sample Cavite Electric Cooperative",
+        "Water": "Deepwell (artesian) and spring source",
+        "Internet and mobile": "Sample Broadband, fair mobile signal",
+        "Road access": "Gravel farm road, natural drainage"
       },
       "media": {},
       "purpose": "sale",
@@ -777,11 +773,10 @@
       "terrain": "Sloping",
       "roadAccess": "Local mountain road frontage",
       "utilities": {
-        "Electricity": "Sample Electric Cooperative",
-        "Water": "Municipal Water",
-        "Mobile": "Sample Mobile",
-        "Internet": "Sample Broadband",
-        "Cable": "Not specified"
+        "Electricity": "Sample Benguet Electric Cooperative",
+        "Water": "Sample Baguio Water District",
+        "Internet and mobile": "Sample FiberOne, strong mobile signal",
+        "Road access": "Paved pine road, with drainage"
       },
       "media": {},
       "purpose": "sale",
@@ -833,11 +828,10 @@
       "terrain": "Level",
       "roadAccess": "Paved city road frontage",
       "utilities": {
-        "Electricity": "Sample Electric Cooperative",
-        "Water": "Municipal Water",
-        "Mobile": "Sample Mobile",
-        "Internet": "Sample Broadband",
-        "Cable": "Not specified"
+        "Electricity": "Sample Metro Manila Electric",
+        "Water": "Sample Metro Manila Water Services",
+        "Internet and mobile": "Sample FiberOne, strong mobile signal",
+        "Road access": "Paved city road, with drainage"
       },
       "media": {},
       "purpose": "sale",
@@ -889,11 +883,10 @@
       "terrain": "Level",
       "roadAccess": "Business-district road frontage",
       "utilities": {
-        "Electricity": "Sample Electric Cooperative",
-        "Water": "Municipal Water",
-        "Mobile": "Sample Mobile",
-        "Internet": "Sample Broadband",
-        "Cable": "Not specified"
+        "Electricity": "Sample Metro Manila Electric",
+        "Water": "Sample Metro Manila Water Services",
+        "Internet and mobile": "Sample FiberOne business line, strong mobile signal",
+        "Road access": "Paved commercial road, with drainage"
       },
       "media": {},
       "purpose": "sale",
@@ -945,11 +938,10 @@
       "terrain": "Level to gently sloping",
       "roadAccess": "National road connection nearby",
       "utilities": {
-        "Electricity": "Sample Electric Cooperative",
-        "Water": "Municipal Water",
-        "Mobile": "Sample Mobile",
-        "Internet": "Sample Broadband",
-        "Cable": "Not specified"
+        "Electricity": "Sample Palawan Electric Cooperative",
+        "Water": "Sample Puerto Princesa Water District",
+        "Internet and mobile": "Sample FiberOne, fair mobile signal",
+        "Road access": "Paved national road frontage, with drainage"
       },
       "media": {},
       "purpose": "sale",
@@ -1002,11 +994,10 @@
       "terrain": "Level",
       "roadAccess": "Barangay road frontage",
       "utilities": {
-        "Electricity": "Sample Electric Cooperative",
-        "Water": "Municipal Water",
-        "Mobile": "Sample Mobile",
-        "Internet": "Sample Broadband",
-        "Cable": "Not specified"
+        "Electricity": "Sample Eastern Samar Electric Cooperative",
+        "Water": "Sample Borongan Water District",
+        "Internet and mobile": "Sample Broadband, fair mobile signal",
+        "Road access": "Concrete baybay road frontage, open canal drainage"
       },
       "media": {},
       "purpose": "sale",

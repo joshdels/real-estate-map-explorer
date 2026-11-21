@@ -8,7 +8,8 @@ import type {
 import type { Feature, FeatureCollection } from "geojson";
 import { config } from "@/explorer/config";
 import { phosphorIcon } from "@/explorer/dom";
-import { formatPrice } from "@/lib/listings";
+import { formatCompactPrice, formatPrice } from "@/lib/listings";
+import type { ListingBounds } from "@/lib/listings";
 import type { Coordinate, Dataset, DestinationType, Property } from "@/lib/types";
 
 const SOURCE_IDS = {
@@ -24,22 +25,19 @@ export class MapController {
   private readonly map: maplibregl.Map;
   private readonly readyPromise: Promise<void>;
   private readonly markers = new Map<string, maplibregl.Marker>();
+  private activePopup?: maplibregl.Popup;
   private readonly destinationMarkers: maplibregl.Marker[] = [];
   private readonly measurementMarkers: maplibregl.Marker[] = [];
   private data!: Dataset;
   private selectedProperty?: Property;
+  private peekedId?: string;
   private mapClickHandler?: (point: Coordinate) => void;
   private routePropertyId?: string;
   private measurementPropertyId?: string;
   private loaded = false;
   private areaFeature?: Feature;
 
-  constructor(
-    private readonly onPropertySelect: (
-      property: Property,
-      trigger?: HTMLElement,
-    ) => void,
-  ) {
+  constructor() {
     this.map = new maplibregl.Map({
       container: "map",
       style: satelliteStyle(),
@@ -48,6 +46,7 @@ export class MapController {
       minZoom: 3,
       maxZoom: config.maxZoom,
       attributionControl: false,
+      fadeDuration: 0,
     });
     this.map.addControl(
       new maplibregl.NavigationControl({ showCompass: false }),
@@ -85,41 +84,92 @@ export class MapController {
     requestAnimationFrame(() => this.map.resize());
   }
 
+  onViewportChange(handler: () => void): void {
+    this.map.on("moveend", handler);
+  }
+
+  viewportBounds(): ListingBounds {
+    const bounds = this.map.getBounds();
+    return {
+      west: bounds.getWest(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      north: bounds.getNorth(),
+    };
+  }
+
   render(data: Dataset): void {
     this.data = data;
+    this.activePopup?.remove();
+    this.activePopup = undefined;
     this.clearPropertyMarkers();
     this.hideMeasurements();
     this.hideRoutes();
     data.properties.forEach((property) => {
       const element = lotMarker(property);
-      const select = () => {
-        if (!this.mapClickHandler) this.select(property, element);
+      const content = lotPopup(property);
+      const popup = new maplibregl.Popup({
+        anchor: "bottom",
+        closeButton: true,
+        closeOnClick: false,
+        maxWidth: "320px",
+        offset: 18,
+      }).setDOMContent(content);
+      let closeTimer: number | undefined;
+      const cancelClose = () => window.clearTimeout(closeTimer);
+      const closePreview = () => {
+        closeTimer = window.setTimeout(() => {
+          if (this.activePopup === popup) {
+            popup.remove();
+            this.clearSelection();
+          }
+        }, 180);
       };
+      const showPreview = () => {
+        cancelClose();
+        if (this.mapClickHandler) return;
+        if (this.activePopup && this.activePopup !== popup) {
+          this.activePopup.remove();
+        }
+        this.activePopup = popup;
+        this.highlight(property);
+        if (!popup.isOpen()) {
+          popup.setLngLat(toLngLat(property.coordinates)).addTo(this.map);
+        }
+      };
+      element.addEventListener("pointerenter", showPreview);
+      element.addEventListener("pointerleave", closePreview);
+      element.addEventListener("focus", showPreview);
+      element.addEventListener("blur", closePreview);
       element.addEventListener("click", (event) => {
         event.stopPropagation();
-        select();
+        if (this.mapClickHandler) {
+          return;
+        }
+        showPreview();
       });
-      element.addEventListener("keydown", (event) => {
+      element.addEventListener("keypress", (event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          select();
+          event.stopImmediatePropagation();
+          showPreview();
         }
       });
+      content.addEventListener("pointerenter", cancelClose);
+      content.addEventListener("pointerleave", closePreview);
       const marker = new maplibregl.Marker({ element, anchor: "center" })
         .setLngLat(toLngLat(property.coordinates))
+        .setPopup(popup)
         .addTo(this.map);
+      popup.on("close", () => {
+        if (this.activePopup === popup) this.activePopup = undefined;
+      });
       this.markers.set(property.id, marker);
     });
   }
 
   focus(property: Property): void {
-    this.clearSelection();
-    this.selectedProperty = property;
-    this.markers
-      .get(property.id)
-      ?.getElement()
-      .classList.add("lot-label-selected");
-    this.syncSelection();
+    this.highlight(property);
     this.map.fitBounds(coordinateBounds(property.polygon), {
       padding:
         innerWidth > 900
@@ -130,9 +180,37 @@ export class MapController {
     });
   }
 
-  select(property: Property, trigger?: HTMLElement): void {
+  openPreview(property: Property): void {
     this.focus(property);
-    this.onPropertySelect(property, trigger);
+    const marker = this.markers.get(property.id);
+    const popup = marker?.getPopup();
+    if (!marker || !popup) return;
+    if (this.activePopup && this.activePopup !== popup) this.activePopup.remove();
+    this.activePopup = popup;
+    if (!popup.isOpen()) popup.addTo(this.map);
+  }
+
+  // Hover highlight driven by the side list. Marks a marker without selecting
+  // it, so moving the pointer over a card makes its map pin stand out. Pass null
+  // to clear.
+  peek(propertyId: string | null): void {
+    const next = propertyId ?? undefined;
+    if (this.peekedId === next) return;
+    if (this.peekedId)
+      this.markers.get(this.peekedId)?.getElement().classList.remove("lot-label-peek");
+    this.peekedId = next;
+    if (this.peekedId)
+      this.markers.get(this.peekedId)?.getElement().classList.add("lot-label-peek");
+  }
+
+  private highlight(property: Property): void {
+    this.clearSelection();
+    this.selectedProperty = property;
+    this.markers
+      .get(property.id)
+      ?.getElement()
+      .classList.add("lot-label-selected");
+    this.syncSelection();
   }
 
   clearSelection(): void {
@@ -382,6 +460,7 @@ export class MapController {
   private clearPropertyMarkers(): void {
     this.markers.forEach((marker) => marker.remove());
     this.markers.clear();
+    this.peekedId = undefined;
   }
 
   private showPerimeter(points: Coordinate[]): void {
@@ -435,8 +514,17 @@ function satelliteStyle(): StyleSpecification {
         attribution: config.attribution,
         maxzoom: config.maxNativeZoom,
       },
+      roads: {
+        type: "raster",
+        tiles: [config.roadsUrl],
+        tileSize: 256,
+        attribution: config.attribution,
+      },
     },
-    layers: [{ id: "satellite", type: "raster", source: "satellite" }],
+    layers: [
+      { id: "satellite", type: "raster", source: "satellite" },
+      { id: "roads", type: "raster", source: "roads", paint: { "raster-fade-duration": 0 } },
+    ],
   };
 }
 
@@ -454,19 +542,61 @@ function lotMarker(property: Property): HTMLButtonElement {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "lot-label";
-  button.title = `${property.title}, ${property.status}`;
-  button.setAttribute("aria-label", `View ${property.title}, ${property.status}`);
+  button.title = `${formatPrice(property)}, ${property.title}`;
+  button.setAttribute(
+    "aria-label",
+    `Preview ${property.title}, ${formatPrice(property)}`,
+  );
   const summary = document.createElement("span");
   summary.className = "lot-label-summary";
   const price = document.createElement("span");
   price.className = "lot-label-fact lot-label-price";
-  price.append(phosphorIcon("tag"), document.createTextNode(formatPrice(property)));
-  const area = document.createElement("span");
-  area.className = "lot-label-fact";
-  area.append(phosphorIcon("ruler"), document.createTextNode(property.area));
-  summary.append(price, area);
+  price.textContent = formatCompactPrice(property);
+  summary.append(price);
   button.append(summary);
   return button;
+}
+
+function lotPopup(property: Property): HTMLElement {
+  const card = document.createElement("article");
+  card.className = "lot-popup";
+
+  // Always show a lot image. Fall back to the shared aerial plan when a listing
+  // has no media of its own, so every popup reads as a card like the list view.
+  const images = property.media?.images?.filter(Boolean) ?? [];
+  const figure = document.createElement("div");
+  figure.className = "lot-popup-media";
+  const image = document.createElement("img");
+  image.className = "lot-popup-image";
+  image.src = images[0] ?? "/images/sample-aerial-lot-plan.webp";
+  image.alt = "";
+  image.loading = "lazy";
+  const status = document.createElement("span");
+  status.className = "lot-popup-tag";
+  status.textContent = property.status;
+  figure.append(image, status);
+  card.append(figure);
+
+  const body = document.createElement("div");
+  body.className = "lot-popup-body";
+  const price = document.createElement("strong");
+  price.className = "lot-popup-price";
+  price.textContent = formatPrice(property);
+  const title = document.createElement("h2");
+  title.textContent = property.title;
+  const address = document.createElement("p");
+  address.className = "lot-popup-address";
+  address.textContent = property.address;
+  const facts = document.createElement("p");
+  facts.className = "lot-popup-facts";
+  facts.textContent = property.area;
+  const link = document.createElement("a");
+  link.className = "lot-popup-link";
+  link.href = `/property/${encodeURIComponent(property.id)}`;
+  link.append(document.createTextNode("View lot"), phosphorIcon("arrow-right"));
+  body.append(price, title, address, facts, link);
+  card.append(body);
+  return card;
 }
 
 function destinationMarker(type: DestinationType, name: string): HTMLElement {

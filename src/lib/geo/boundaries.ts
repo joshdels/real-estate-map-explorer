@@ -50,6 +50,31 @@ function inRing([lat, lng]: Coordinate, ring: Ring): boolean {
   return inside;
 }
 
+/**
+ * Bounding box of a feature's outlines as [west, south, east, north].
+ * Walks the coordinate tree so it works for both Polygon and MultiPolygon
+ * geometries (the region file mixes the two).
+ */
+export function featureBounds(
+  feature: { geometry: { coordinates: unknown } },
+): [number, number, number, number] {
+  let west = Infinity, south = Infinity, east = -Infinity, north = -Infinity;
+  const walk = (node: unknown): void => {
+    if (!Array.isArray(node)) return;
+    if (typeof node[0] === "number" && typeof node[1] === "number") {
+      const [lng, lat] = node as [number, number];
+      if (lng < west) west = lng;
+      if (lng > east) east = lng;
+      if (lat < south) south = lat;
+      if (lat > north) north = lat;
+      return;
+    }
+    for (const child of node) walk(child);
+  };
+  walk(feature.geometry.coordinates);
+  return [west, south, east, north];
+}
+
 export function pointInFeature(point: Coordinate, feature: BoundaryFeature): boolean {
   return feature.geometry.coordinates.some(
     ([outer, ...holes]) =>
@@ -145,11 +170,20 @@ export class BoundaryService {
   index(): Promise<BoundaryIndex> {
     return this.load("index.json");
   }
+  regions(): Promise<BoundaryCollection> {
+    return this.load("regions.geojson");
+  }
   provinces(): Promise<BoundaryCollection> {
     return this.load("provinces.geojson");
   }
   cities(provinceCode: string): Promise<BoundaryCollection> {
     return this.load(`cities/${provinceCode}.geojson`);
+  }
+
+  /** Outline of one region, for drawing on the map. */
+  async regionOutline(regionCode: string): Promise<BoundaryFeature | undefined> {
+    const collection = await this.regions();
+    return collection.features.find((item) => item.properties.code === regionCode);
   }
 
   /** Outline of one province or city/municipality, for drawing on the map. */

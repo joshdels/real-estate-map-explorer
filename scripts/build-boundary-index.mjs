@@ -1,5 +1,6 @@
 // Splits the simplified PSA/NAMRIA GeoJSON into the files served to the browser:
 //   index.json            region / province / city-municipality lookup (no geometry)
+//   regions.geojson       lightweight region outlines for the homepage selector
 //   provinces.geojson     province outlines, used to find a point's province
 //   cities/<adm2>.geojson city and municipality outlines, loaded per province
 // Run through scripts/build-boundaries.sh.
@@ -33,14 +34,26 @@ function clean(geometry) {
 
 const byName = (a, b) => a.name.localeCompare(b.name, "en");
 const regions = new Map();
+const regionFeatures = [];
 const provinces = [];
 const provinceFeatures = [];
+
+for (const feature of read("adm1.geojson").features) {
+  const p = feature.properties;
+  const shape = clean(feature.geometry);
+  if (!shape) continue;
+  regions.set(p.adm1_pcode, { code: p.adm1_pcode, name: p.adm1_name });
+  regionFeatures.push({
+    type: "Feature",
+    properties: { code: p.adm1_pcode, name: p.adm1_name },
+    geometry: shape.geometry,
+  });
+}
 
 for (const feature of read("adm2.geojson").features) {
   const p = feature.properties;
   const shape = clean(feature.geometry);
   if (!shape) continue;
-  regions.set(p.adm1_pcode, { code: p.adm1_pcode, name: p.adm1_name });
   provinces.push({
     code: p.adm2_pcode,
     name: p.adm2_name,
@@ -82,6 +95,7 @@ writeFileSync(
     cities: cities.sort(byName),
   }),
 );
+writeFileSync(path.join(outDir, "regions.geojson"), collection(regionFeatures));
 writeFileSync(path.join(outDir, "provinces.geojson"), collection(provinceFeatures));
 for (const [province, features] of cityFeatures)
   writeFileSync(path.join(outDir, "cities", `${province}.geojson`), collection(features));

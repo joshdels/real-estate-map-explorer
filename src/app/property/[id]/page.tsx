@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SiteFooter } from "@/components/layout/site-chrome";
+import { SiteFooter, SiteHeader } from "@/components/layout/site-chrome";
 import { brand } from "@/lib/brand";
 import { formatPrice, isPublic } from "@/lib/listings";
 import { seedDataset } from "@/lib/seed";
@@ -53,15 +53,17 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export default async function PropertyPage({ params }: Params) {
   const { id } = await params;
   return (
-    <main className="detail-page" id="top">
-      <header className="detail-page-bar">
-        <a className="detail-back" href="/explore">
-          <i className="ph ph-arrow-left" aria-hidden="true" /> All lots
-        </a>
-        <span className="detail-brand">{brand.name}</span>
-      </header>
-      <PropertyView id={id} />
+    <div className="page-shell">
+      <SiteHeader />
+      <main className="detail-page" id="top">
+        <div className="detail-backbar">
+          <a className="detail-back" href="/explore">
+            <i className="ph ph-arrow-left" aria-hidden="true" /> All lots
+          </a>
+        </div>
+        <PropertyView id={id} />
+      </main>
       <SiteFooter />
-    </main>
+    </div>
   );
 }

@@ -1,15 +1,35 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useId, useRef, useState } from "react";
+import { List, X } from "@phosphor-icons/react";
 import { brand } from "@/lib/brand";
 
 // Links to /explore are plain anchors on purpose: the map explorer attaches
 // its behavior once per page load, so it must be entered with a full navigation.
 
 export function SiteHeader({ current }: { current?: "home" | "providers" | "dashboard" | "staff" }) {
-  const link = (href: string, label: string, key: string) => (
-    <Link className="site-nav-link" href={href} aria-current={current === key ? "page" : undefined}>
-      {label}
-    </Link>
-  );
+  const [open, setOpen] = useState(false);
+  const menuId = useId();
+  const navRef = useRef<HTMLElement>(null);
+
+  // Close the dropdown on Escape or a click outside the nav.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    const onClick = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onClick);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onClick);
+    };
+  }, [open]);
+
   return (
     <header className="page-header">
       <div className="page-header-inner">
@@ -20,10 +40,27 @@ export function SiteHeader({ current }: { current?: "home" | "providers" | "dash
             <small>{brand.tagline}</small>
           </span>
         </Link>
-        <nav className="page-nav" aria-label="Primary navigation">
+        <nav className="page-nav" aria-label="Primary navigation" ref={navRef}>
           <a className="site-nav-link" href="/explore">Find Lands</a>
-          {link("/providers", "Trusted Providers", "providers")}
-          <Link className="nav-cta" href="/become-a-provider">Become a Provider</Link>
+          <Link className="site-nav-link" href="/providers" aria-current={current === "providers" ? "page" : undefined}>Trusted Providers</Link>
+          <Link className="nav-button nav-button-ghost" href="/login">Login</Link>
+          <Link className="nav-button nav-button-solid" href="/become-a-provider">Become a Provider</Link>
+          <button
+            type="button"
+            className="nav-burger"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            aria-controls={menuId}
+            onClick={() => setOpen((value) => !value)}
+          >
+            {open ? <X aria-hidden="true" /> : <List aria-hidden="true" />}
+          </button>
+          <div className="nav-dropdown" id={menuId} hidden={!open}>
+            <Link className="nav-dropdown-link" href="/" aria-current={current === "home" ? "page" : undefined} onClick={() => setOpen(false)}>Home</Link>
+            <a className="nav-dropdown-link" href="/explore" onClick={() => setOpen(false)}>Find Lands</a>
+            <Link className="nav-dropdown-link" href="/providers" aria-current={current === "providers" ? "page" : undefined} onClick={() => setOpen(false)}>Trusted Providers</Link>
+            <Link className="nav-dropdown-link nav-dropdown-login" href="/login" onClick={() => setOpen(false)}>Login</Link>
+          </div>
         </nav>
       </div>
     </header>

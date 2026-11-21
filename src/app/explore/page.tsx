@@ -9,5 +9,18 @@ export const metadata: Metadata = {
 };
 
 export default function ExplorePage() {
-  return <MapExplorer />;
+  return (
+    <>
+      {/* Paint the map-first layout immediately (AGENTS: satellite map by
+          default), so the first frame is the map and sidebar, not a full-width
+          list skeleton. The explorer still honours ?view=list after load. */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html:
+            "try{if(new URLSearchParams(location.search).get('view')!=='list')document.body.classList.add('show-map-view')}catch(e){}",
+        }}
+      />
+      <MapExplorer />
+    </>
+  );
 }
