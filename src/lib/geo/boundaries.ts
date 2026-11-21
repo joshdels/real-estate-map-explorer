@@ -35,6 +35,18 @@ export interface BoundaryCollection {
   type: "FeatureCollection";
   features: BoundaryFeature[];
 }
+export interface RegionBoundaryFeature {
+  type: "Feature";
+  properties: { code: string; name: string };
+  geometry: {
+    type: "Polygon" | "MultiPolygon";
+    coordinates: Ring[] | Ring[][];
+  };
+}
+export interface RegionBoundaryCollection {
+  type: "FeatureCollection";
+  features: RegionBoundaryFeature[];
+}
 
 /** Points this far (km) from every outline are treated as outside the country. */
 const NEAREST_LIMIT_KM = 15;
@@ -170,7 +182,7 @@ export class BoundaryService {
   index(): Promise<BoundaryIndex> {
     return this.load("index.json");
   }
-  regions(): Promise<BoundaryCollection> {
+  regions(): Promise<RegionBoundaryCollection> {
     return this.load("regions.geojson");
   }
   provinces(): Promise<BoundaryCollection> {
@@ -181,7 +193,7 @@ export class BoundaryService {
   }
 
   /** Outline of one region, for drawing on the map. */
-  async regionOutline(regionCode: string): Promise<BoundaryFeature | undefined> {
+  async regionOutline(regionCode: string): Promise<RegionBoundaryFeature | undefined> {
     const collection = await this.regions();
     return collection.features.find((item) => item.properties.code === regionCode);
   }

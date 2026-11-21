@@ -1,20 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useBoundaryIndex } from "@/hooks/use-boundary-index";
+import {
+  boundaries,
+  type RegionBoundaryCollection,
+  type RegionBoundaryFeature,
+} from "@/lib/geo/boundaries";
 
 type Position = [number, number];
 type PolygonCoordinates = Position[][];
-
-type ProvinceFeature = {
-  properties: { code: string; name: string };
-  geometry: {
-    type: "Polygon" | "MultiPolygon";
-    coordinates: PolygonCoordinates | PolygonCoordinates[];
-  };
-};
-
-type ProvinceCollection = { features: ProvinceFeature[] };
 
 const MAP_BOUNDS = {
   west: 116.8,
@@ -51,7 +45,7 @@ function ringPath(ring: Position[]) {
   return ring.map((position, index) => `${index === 0 ? "M" : "L"}${point(position)}`).join(" ") + " Z";
 }
 
-function geometryPath(feature: ProvinceFeature) {
+function geometryPath(feature: RegionBoundaryFeature) {
   const polygons = feature.geometry.type === "Polygon"
     ? [feature.geometry.coordinates as PolygonCoordinates]
     : feature.geometry.coordinates as PolygonCoordinates[];
@@ -72,21 +66,24 @@ function shortRegionName(name: string) {
 }
 
 export function RegionMapSelector() {
-  const { index, failed } = useBoundaryIndex();
-  const [collection, setCollection] = useState<ProvinceCollection | null>(null);
+  const [collection, setCollection] = useState<RegionBoundaryCollection | null>(null);
   const [mapFailed, setMapFailed] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
-    if (collection || mapFailed) return;
-    void fetch("/data/boundaries/regions.geojson")
-      .then((response) => {
-        if (!response.ok) throw new Error("Could not load the region map");
-        return response.json() as Promise<ProvinceCollection>;
-      })
-      .then(setCollection)
-      .catch(() => setMapFailed(true));
-  }, [collection, mapFailed]);
+    let active = true;
+    boundaries.regions().then(
+      (loaded) => {
+        if (active) setCollection(loaded);
+      },
+      () => {
+        if (active) setMapFailed(true);
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const regionPaths = useMemo(() => {
     if (!collection) return [];
@@ -130,8 +127,8 @@ export function RegionMapSelector() {
         <p className="region-map-caption" role="status" aria-live="polite" data-active={hovered ? "true" : "false"}>
           {hovered ?? "Hover or focus a region to see its name, then select it."}
         </p>
-        {!index && !failed && <p className="region-finder-status" role="status">Loading region map...</p>}
-        {(failed || mapFailed) && <p className="region-finder-status" role="status">The region map is unavailable. Use the location search above to find land.</p>}
+        {!collection && !mapFailed && <p className="region-finder-status" role="status">Loading region map...</p>}
+        {mapFailed && <p className="region-finder-status" role="status">The region map is unavailable. Use the location search above to find land.</p>}
       </div>
     </section>
   );

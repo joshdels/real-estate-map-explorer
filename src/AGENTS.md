@@ -16,7 +16,7 @@ styles/      CSS
 - `lib/` imports nothing from the other folders and has no React or DOM-framework code.
 - `hooks/` and `explorer/` may import `lib/`. `components/` may import `hooks/` and `lib/`. `app/` imports `components/` and `lib/`.
 - Never import `app/` from anywhere, and never import `explorer/` from React components except the single lazy `import("@/explorer/main")` in `components/explorer/map-explorer.tsx`.
-- `proxy.ts` is the Next.js 16 request proxy (Supabase session refresh). It must stay directly in `src/`.
+- Django authentication is called directly from browser clients and stored in HTTP-only cookies.
 - Phosphor crosses the React / imperative boundary deliberately: components use `@phosphor-icons/react`, while explorer DOM modules use `phosphorIcon()` and the globally loaded regular webfont. Do not make either layer depend on the other to render an icon.
 - User-facing copy uses plain language for buyers and property providers. Avoid technical or agency jargon except in required credits and notices, and avoid em dashes or en dashes in interface text.
 

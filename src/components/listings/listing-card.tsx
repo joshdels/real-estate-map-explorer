@@ -11,6 +11,7 @@ import {
 import { REPORT_REASONS, addReport } from "@/lib/local-records";
 import { shareListing } from "@/lib/share";
 import type { Property, Provider } from "@/lib/types";
+import { isProductionMode } from "@/lib/runtime-mode";
 
 export function Stars({ rating }: { rating?: ProviderRating }) {
   if (!rating) return <span className="rating rating-empty">No reviews yet</span>;
@@ -83,13 +84,15 @@ export function ListingCard({
   provider?: Provider;
   rating?: ProviderRating;
 }) {
-  const image = property.media?.images?.[0] ?? "/images/sample-aerial-lot-plan.webp";
+  const image = property.media?.images?.[0] ?? (isProductionMode ? "" : "/images/sample-aerial-lot-plan.webp");
   return (
     <article className="property-card listing-card">
       <Link className="property-card-button" href={`/property/${encodeURIComponent(property.id)}`}>
         <span className="property-card-media">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={image} alt="" loading="lazy" />
+          {image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={image} alt="" loading="lazy" />
+          ) : null}
           <span className={`card-status status-${property.status.toLowerCase()}`}>{property.status}</span>
         </span>
         <span className="property-card-content">

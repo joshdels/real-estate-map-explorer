@@ -21,6 +21,7 @@ import {
 import { REPORT_REASONS } from "@/lib/local-records";
 import { shareListing } from "@/lib/share";
 import type { Agent, Dataset, Property, Provider } from "@/lib/types";
+import { isProductionMode } from "@/lib/runtime-mode";
 
 let initialization: Promise<void> | undefined;
 
@@ -31,7 +32,9 @@ export function initializeApp(): Promise<void> {
     const status = qs<HTMLElement>("#app-status");
     status.hidden = false;
     status.textContent =
-      "The application could not start. Check the console and the validated fallback dataset.";
+      isProductionMode
+        ? "Listings are unavailable right now. Please try again later."
+        : "The application could not start. Check the console and the validated fallback dataset.";
     throw error;
   });
   return initialization;
@@ -596,6 +599,7 @@ function propertyCard(property: Property, options: CardOptions): HTMLElement {
 
 function renderAgent(agent?: Agent): void {
   if (!agent) return;
+  qs<HTMLElement>("#agent-card").hidden = false;
   qs("#agent-initials").textContent = agent.initials || "EC";
   qs("#agent-name").textContent = agent.name || "Property specialist";
   qs("#agent-role").textContent = agent.role || "Property Specialist";

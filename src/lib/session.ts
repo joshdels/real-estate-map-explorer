@@ -3,7 +3,7 @@ import type { SessionRole, StaffRole } from "@/lib/types";
 /**
  * Local demo session. This is a visible convenience for trying each role in
  * one browser. It is NOT authentication and must never guard real private
- * data: production roles need Supabase Auth and server-side authorization.
+ * data: production roles need Django authentication and server-side authorization.
  */
 export interface Session {
   role: SessionRole;

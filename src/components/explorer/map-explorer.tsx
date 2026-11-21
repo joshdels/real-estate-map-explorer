@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { brand } from "@/lib/brand";
+import { isProductionMode } from "@/lib/runtime-mode";
 
 export function MapExplorer({ workspaceMode = false }: { workspaceMode?: boolean }) {
   useEffect(() => {
@@ -82,7 +83,7 @@ export function MapExplorer({ workspaceMode = false }: { workspaceMode?: boolean
           ))}
         </div>
         <p id="property-list-empty" className="property-list-empty" hidden>No lots match this search. Try another place or filter.</p>
-        <p className="sample-disclosure">{brand.sampleNotice} {brand.boundaryCredit} Satellite imagery © Esri.</p>
+        <p className="sample-disclosure">{brand.sampleNotice ? `${brand.sampleNotice} ` : ""}{brand.boundaryCredit} Satellite imagery © Esri.</p>
       </section>
     </aside>
     <div id="map" className="map" aria-label="Interactive satellite map of available lots"></div>
@@ -90,13 +91,13 @@ export function MapExplorer({ workspaceMode = false }: { workspaceMode?: boolean
       <button id="show-map-button" type="button" aria-pressed="true"><i className="ph ph-map-pin" aria-hidden="true" /> Map</button>
       <button id="show-list-button" type="button" aria-pressed="false"><i className="ph ph-list" aria-hidden="true" /> List</button>
     </div>
-    <section className="agent-card" aria-label="Land specialist">
-      <div className="agent-heading"><span id="agent-initials" className="avatar" aria-hidden="true">EC</span><span><strong id="agent-name">Eric Costuna</strong><small id="agent-role">Property Specialist</small></span></div>
-      <a id="agent-call" className="contact-button contact-call" href="tel:+639285354832">
+    <section id="agent-card" className="agent-card" aria-label="Land specialist" hidden>
+      <div className="agent-heading"><span id="agent-initials" className="avatar" aria-hidden="true"></span><span><strong id="agent-name"></strong><small id="agent-role"></small></span></div>
+      <a id="agent-call" className="contact-button contact-call" href="#">
         <i className="ph ph-phone contact-emoji" aria-hidden="true" />
-        <span id="agent-phone">Call: 0928 535 4832</span>
+        <span id="agent-phone"></span>
       </a>
-      <a id="agent-message" className="contact-button contact-message" href="https://www.facebook.com/EsamarRealtor" target="_blank" rel="noopener noreferrer">
+      <a id="agent-message" className="contact-button contact-message" href="#" target="_blank" rel="noopener noreferrer">
         <i className="ph ph-globe contact-emoji" aria-hidden="true" />
         <span>Visit Page</span>
       </a>
@@ -235,7 +236,7 @@ export function MapExplorer({ workspaceMode = false }: { workspaceMode?: boolean
             <span className="property-minimap-caption">Approximate location — tap to open the full map.</span>
           </button>
         </section>
-        <p className="data-note">Property information shown here is sample content and must be independently verified.</p>
+        {!isProductionMode ? <p className="data-note">Property information shown here is sample content and must be independently verified.</p> : null}
       </div>
     </aside>
     <div id="admin-dialog" className="dialog-backdrop" hidden>
@@ -244,12 +245,11 @@ export function MapExplorer({ workspaceMode = false }: { workspaceMode?: boolean
         <h2 id="admin-access-title">List your lot plan</h2>
         <p className="signup-intro">Create an account, add your land information and images, and place its approximate lot plan on the map.</p>
         <ol className="signup-steps" aria-label="How lot listing works"><li><b>1</b><span>Sign in securely</span></li><li><b>2</b><span>Add accurate land details</span></li><li><b>3</b><span>Submit your listing</span></li></ol>
-        <p id="auth-status" className="auth-status">Sign in with Google or Facebook to manage shared listing data, or use a local demo passcode for this browser only.</p>
-        <button id="google-sign-in" className="google-auth-button" type="button"><span aria-hidden="true">G</span> Continue with Google</button>
-        <button id="facebook-sign-in" className="facebook-auth-button" type="button"><span aria-hidden="true">f</span> Continue with Facebook</button>
-        <button id="google-sign-out" className="outline-button" type="button" hidden>Sign out</button>
-        <div className="auth-divider"><span>or local access</span></div>
-        <form id="admin-access-form"><input name="username" type="text" value="local-admin" autoComplete="username" readOnly hidden /><label className="dialog-label">Passcode (demo: “admin” or “staff”)<input id="admin-passcode" type="password" required autoComplete="current-password" /></label><p id="admin-access-error" className="form-error" role="alert"></p><button className="primary-button" type="submit">Open listing workspace</button></form>
+        <p id="auth-status" className="auth-status">{isProductionMode ? "Sign in with your email and password." : "Sign in with your email and password, or use a local demo passcode."}</p>
+        <a id="django-sign-in" className="primary-button auth-login-link" href="/login">Sign in with email</a>
+        <button id="django-sign-out" className="outline-button" type="button" hidden>Sign out</button>
+        <div className="auth-divider" hidden={isProductionMode}><span>or local access</span></div>
+        <form id="admin-access-form" hidden={isProductionMode}><input name="username" type="text" value="local-admin" autoComplete="username" readOnly hidden /><label className="dialog-label">Passcode (demo: “admin” or “staff”)<input id="admin-passcode" type="password" required autoComplete="current-password" /></label><p id="admin-access-error" className="form-error" role="alert"></p><button className="primary-button" type="submit">Open listing workspace</button></form>
         <p className="form-help">Listing as a client? <a href="/dashboard">Open the client dashboard</a> to manage your listings and groups.</p>
       </section>
     </div>

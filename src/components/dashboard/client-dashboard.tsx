@@ -24,6 +24,7 @@ import { clearSession, setSession } from "@/lib/session";
 import type { ListingStatus, Provider, ProviderKind } from "@/lib/types";
 import { useDataset } from "@/hooks/use-dataset";
 import { useSession } from "@/hooks/use-session";
+import { isProductionMode } from "@/lib/runtime-mode";
 
 const STATUSES: ListingStatus[] = ["Available", "Reserved", "Sold"];
 
@@ -40,6 +41,17 @@ export function ClientDashboard() {
     setSession({ role: "client", name: target.name, providerId: target.id });
     refreshSession();
   };
+
+  if (isProductionMode && !provider) {
+    return (
+      <section className="page-section" aria-labelledby="provider-access-title">
+        <p className="section-kicker">Provider portal</p>
+        <h1 id="provider-access-title">Sign in to manage your listings</h1>
+        <p className="section-lead">Access your provider profile, listings, groups, and highlights.</p>
+        <Link className="primary-action" href="/login">Sign in</Link>
+      </section>
+    );
+  }
 
   if (!provider)
     return (
@@ -155,7 +167,7 @@ export function ClientDashboard() {
           <Link href={`/providers/${encodeURIComponent(provider.id)}`}><ArrowSquareOut aria-hidden="true" /> View public page</Link>
           <button type="button" onClick={() => { clearSession(); refreshSession(); }}><SignOut aria-hidden="true" /> Switch profile</button>
         </div>
-        <p className="provider-demo-note">Demo workspace. Changes stay in this browser when the remote repository is unavailable.</p>
+        {!isProductionMode ? <p className="provider-demo-note">Demo workspace. Changes stay in this browser when the remote repository is unavailable.</p> : null}
       </aside>
 
       <div className="provider-portal-main">

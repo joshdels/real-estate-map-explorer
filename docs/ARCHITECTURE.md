@@ -3,58 +3,66 @@
 ## Runtime overview
 
 ```text
-Next.js App Router (src/app)
-  layout.tsx ------------- metadata, global CSS, panorama runtime
-  /, /providers, /property/[id], /dashboard, /staff
-    `-- React components (src/components)
-          `-- hooks (src/hooks): useDataset, useSession, useBoundaryIndex
-                `-- src/lib
-  /explore
-    `-- components/explorer/MapExplorer (markup + lazy import)
-          `-- src/explorer/main.ts (composition, listing portal)
-                |-- MapController ----- MapLibre GL + Esri imagery + area outline
-                |-- AdminConsole ------ listing workspace
-                |-- DetailsPanel, MediaViewer, AuthController
-                `-- src/lib
+Browser
+  Next.js pages and explorer
+    |-- DjangoAuthClient ------ /api/v1/auth/*
+    |-- PropertyStore
+    |     |-- DjangoRepository - /api/v1/dataset
+    |     `-- LocalRepository -- bundled seed + localStorage fallback
+    `-- BoundaryService ------- static public/data/boundaries files
 
-src/lib
-  PropertyStore ---------- every dataset mutation
-    `-- DataRepository
-         |-- LocalRepository ----- seed JSON + localStorage
-         `-- SupabaseRepository -- public.app_datasets
-  validation ------------- validateDataset(): the gate for all stored data
-  listings --------------- visibility, filters, ratings, recommended ranking
-  geo/boundaries --------- BoundaryService over public/data/boundaries
-  session ---------------- local demo roles and permission matrix
-  local-records ---------- browser-only reports, assisted cases, activity log
+Django REST Framework API
+  |-- accounts app ------------ users, roles, email/password, JWT cookies
+  `-- datasets app ------------ temporary whole-dataset JSON contract
 ```
 
-Both UI styles share `src/lib`, so a rule such as "suspended listings are never public" is written once (`isPublic`) and used by the explorer and every React page. `validateDataset()` checks coordinates, prices, polygons, media protocols, enum fields, provider and group references, and review ratings, and fills defaults so datasets saved before a field existed still load.
+The browser communicates with Django through `NEXT_PUBLIC_API_URL`. No database credentials or
+authentication tokens are stored in the frontend. Django sets HTTP-only access and refresh cookies,
+and browser requests use `credentials: "include"`.
+
+## Data flow
+
+`src/lib/repositories/factory.ts` selects `DjangoRepository` when `NEXT_PUBLIC_API_URL` exists. It
+loads `GET /api/v1/dataset` with a six-second timeout. If configuration or the API is unavailable,
+the app uses `LocalRepository`, which loads the validated bundled sample and persists browser-only
+changes in `localStorage`.
+
+Every remote and local dataset passes through `validateDataset()`. `PropertyStore` is the only
+mutation boundary. A failed remote save keeps the validated in-memory state and changes subsequent
+persistence to local storage.
+
+The local fallback is for demos and outages. It is not a second backend and does not synchronize
+changes to Django later.
+
+## Authentication flow
+
+`src/lib/django-auth.ts` owns the browser API calls:
+
+1. `/login` posts email and password to Django.
+2. Django returns HTTP-only JWT cookies.
+3. The frontend reads the current public user representation from `/api/v1/auth/user/`.
+4. Dataset writes include the cookies and Django enforces administrator/employee permissions.
+5. Logout invalidates the Django session cookies.
+
+The public `admin` and `staff` passcodes are still a local demonstration layer. They are not a
+security boundary. Do not store private information behind them. Replace each dashboard and staff
+permission with the authenticated Django role before real operations.
 
 ## Trust boundaries
 
-- The dataset is readable by anyone. It holds only publishable information.
-- Roles are a session-storage demo. Any visitor can become an administrator with the public passcode, so no permission check here is a security control.
-- Reports, assisted cases, and the activity log are per-browser local storage and are not shared between devices.
-- Administrative outlines are simplified. An area match is a search aid, not a legal determination.
+- The dataset endpoint is publicly readable and contains publishable information only.
+- Django owns credentials, role checks, OAuth secrets if enabled later, and database access.
+- Browser code receives only `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_SITE_URL`.
+- Reports, assisted cases, and the activity log remain local to one browser.
+- Administrative outlines are simplified search aids, not surveyed or legal boundaries.
 
-## Supabase boundary
+## Source layout
 
-`src/lib/supabase/client.ts` creates the typed browser client from public environment values. `server.ts` prepares the cookie-aware server client needed by a future authentication flow and is not imported into the browser bundle. Database types live beside the factories and should be regenerated after migrations change.
-
-The migration enables RLS. Anonymous and authenticated visitors may read only the `default` published dataset. Writes require an authenticated Supabase user. The local demo passcodes never grant database authority.
-
-A second migration adds PostGIS tables for regions, provinces, and cities with public read access and `locate_admin_area(lat, lng)`. They are loaded by `scripts/load-boundaries-db.sh` and are not yet used by the application.
-
-## Fallback sequence
-
-1. Missing public Supabase configuration selects `LocalRepository`.
-2. A remote connection, schema, row, or validation failure loads the bundled seed.
-3. Browser-local mutations use `real-estate-map-explorer.data.v7`.
-4. A failed remote save retains validated state and switches persistence to local storage.
-
-The fallback preserves demo availability but is not a production database substitute.
-
-## Deployment
-
-`next build` creates the production application in `.next/`. Deploy to a Node-compatible Next.js host and provide public Supabase configuration. Add an authenticated server-side administration path before storing real or private listing data.
+- `src/lib/django-auth.ts`: email/password login, current user, logout.
+- `src/lib/repositories/django-repository.ts`: whole-dataset DRF adapter.
+- `src/lib/repositories/local-repository.ts`: validated seed and local fallback.
+- `src/lib/repositories/factory.ts`: remote selection, timeout, and fallback.
+- `src/components/auth/login-card.tsx`: real email/password login surface.
+- `src/explorer/auth.ts`: cookie-session status for the map workspace.
+- `docs/API.md`: exact endpoint contract and troubleshooting.
+- `docs/DEPLOYMENT.md`: deployment order and production configuration.

@@ -930,6 +930,7 @@ a:focus-visible {
   box-shadow: var(--shadow-float);
   backdrop-filter: blur(12px);
 }
+.agent-card[hidden] { display: none; }
 .agent-heading {
   display: flex;
   align-items: center;
@@ -1763,43 +1764,12 @@ a:focus-visible {
   font-size: 0.82rem;
   line-height: 1.5;
 }
-.google-auth-button,
-.facebook-auth-button {
+.auth-login-link {
   display: flex;
   width: 100%;
-  align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border: 1px solid #c7d1dc;
-  border-radius: 10px;
-  background: #fff;
-  color: #24364a;
-  cursor: pointer;
-  font: inherit;
-  font-weight: 800;
-}
-.google-auth-button span {
-  color: #4285f4;
-  font-size: 1.1rem;
-}
-.facebook-auth-button {
-  margin-top: 9px;
-  border-color: #1877f2;
-  background: #1877f2;
-  color: #fff;
-}
-.facebook-auth-button span {
-  display: grid;
-  width: 22px;
-  height: 22px;
-  place-items: center;
-  border-radius: 50%;
-  background: #fff;
-  color: #1877f2;
-  font-family: Arial, sans-serif;
-  font-size: 1rem;
-  font-weight: 900;
+  margin-top: 12px;
+  text-decoration: none;
 }
 .auth-divider {
   display: flex;
@@ -2668,6 +2638,12 @@ span.feature-button[aria-disabled="true"] {
 }
 
 .detail-nearby { display: grid; gap: 12px; }
+.detail-map-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
 .detail-map-toolbar {
   display: inline-flex;
   gap: 4px;
@@ -2678,7 +2654,7 @@ span.feature-button[aria-disabled="true"] {
   justify-self: start;
 }
 .detail-map-layer {
-  min-height: 34px;
+  min-height: 40px;
   padding: 0 14px;
   border: 0;
   border-radius: 999px;
@@ -2692,6 +2668,11 @@ span.feature-button[aria-disabled="true"] {
   background: var(--color-brand);
   color: #fff;
 }
+.detail-map-credit {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.7rem;
+}
 .detail-minimap-interactive {
   position: relative;
   width: 100%;
@@ -2704,6 +2685,7 @@ span.feature-button[aria-disabled="true"] {
   border-radius: 14px;
 }
 @media (max-width: 600px) {
+  .detail-map-controls { align-items: flex-start; flex-direction: column; }
   .detail-minimap-interactive {
     height: 320px;
   }
@@ -2748,20 +2730,50 @@ span.feature-button[aria-disabled="true"] {
 .nearby-pin-groceries { background: #2f9e52; }
 .nearby-pin-health { background: #e5484d; }
 .nearby-pin-finance { background: #8a4fd8; }
-/* Grouped-count bubble: white, so the number reads clearly over satellite and
-   street basemaps. Click to zoom in and split the group into pins. */
+/* Grouped place badge: category colour and icons identify what is inside. The
+   icon row sits above the count so the cluster stays compact on the map. */
 .nearby-cluster {
-  display: grid;
-  place-items: center;
-  border: 2px solid var(--color-brand);
+  box-sizing: border-box;
+  display: flex;
+  width: 50px;
+  height: 50px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 6px;
+  border: 3px solid #fff;
   border-radius: 50%;
-  background: #fff;
-  color: var(--color-night);
+  background: var(--color-brand);
+  color: #fff;
   box-shadow: 0 2px 8px rgb(14 18 46 / 40%);
   font-weight: 800;
   font-size: 0.85rem;
   cursor: pointer;
 }
+.nearby-cluster-school { background: #2f73d8; }
+.nearby-cluster-transport { background: #6f78f0; }
+.nearby-cluster-dining { background: #e0457b; }
+.nearby-cluster-cafe { background: #8a5a2b; }
+.nearby-cluster-groceries { background: #2f9e52; }
+.nearby-cluster-health { background: #e5484d; }
+.nearby-cluster-finance { background: #8a4fd8; }
+.nearby-cluster-icons {
+  display: flex;
+  min-height: 14px;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.nearby-cluster-icon {
+  display: grid;
+  width: 13px;
+  height: 13px;
+  place-items: center;
+  color: #fff;
+  font-size: 0.72rem;
+}
+.nearby-cluster-count { min-width: 1ch; line-height: 1; text-align: center; }
 .nearby-cluster:focus-visible { outline: 3px solid var(--color-brand); outline-offset: 2px; }
 .detail-nearby-chips {
   display: flex;
@@ -3061,55 +3073,6 @@ span.feature-button[aria-disabled="true"] {
   font-size: 0.95rem;
 }
 .login-input input:focus { outline: none; }
-.login-captcha {
-  display: flex;
-  min-height: 56px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: #f6f8ff;
-}
-.login-captcha[data-state="passed"] {
-  border-color: #2f9e6f;
-  background: #eefaf3;
-}
-.login-captcha-check {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--color-ink-strong);
-  font-size: 0.86rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-.login-captcha-check:disabled { cursor: default; }
-.login-captcha-box {
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--color-muted);
-  border-radius: 6px;
-}
-.login-captcha-check svg {
-  font-size: 1.4rem;
-  color: #2f9e6f;
-}
-.login-captcha-spin { animation: spin 0.8s linear infinite; }
-.login-captcha-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--color-muted);
-  font-size: 0.68rem;
-  font-weight: 600;
-  text-align: right;
-}
-.login-captcha-brand svg { font-size: 0.95rem; color: #f6821f; }
 .login-error {
   margin: 0;
   color: #c0392b;
@@ -3117,6 +3080,10 @@ span.feature-button[aria-disabled="true"] {
   font-weight: 700;
 }
 .login-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   min-height: 48px;
   margin-top: 2px;
   border: 0;
@@ -3128,6 +3095,8 @@ span.feature-button[aria-disabled="true"] {
   cursor: pointer;
   transition: background 150ms ease, transform 120ms ease;
 }
+.login-submit:disabled { cursor: wait; opacity: 0.75; }
+.login-submit-spinner { animation: spin 0.8s linear infinite; }
 .login-submit:hover { background: var(--color-brand-dark); }
 .login-submit:active { transform: translateY(1px); }
 .login-alt {
@@ -3147,7 +3116,6 @@ span.feature-button[aria-disabled="true"] {
   text-align: center;
 }
 @media (prefers-reduced-motion: reduce) {
-  .login-captcha-spin { animation: none; }
   .login-submit { transition: none; }
   .lot-label .lot-label-summary { transition: none; }
   .lot-label-peek .lot-label-summary,

@@ -5,7 +5,7 @@ Imperative browser modules behind `/explore`. Adds to the root and `src/AGENTS.m
 - `main.ts` — composition and the listing portal (filters, cards, share, report, URL parameters). Keep feature logic out of it.
 - `map-controller.ts` — the only owner of the MapLibre instance: markers, selection, routes, measurements, draft boundary, and the administrative-area outline (`showArea`).
 - `admin.ts` — the listing workspace: property form, utilities, routes, destinations, local reports.
-- `details.ts`, `media-viewer.ts`, `auth.ts`, `config.ts`, `dom.ts` — details panel, media dialog, Supabase OAuth buttons, map config, `qs()`.
+- `details.ts`, `media-viewer.ts`, `auth.ts`, `config.ts`, `dom.ts` — details panel, media dialog, Django API authentication, map config, `qs()`.
 
 ## Rules
 

@@ -5,7 +5,7 @@ import { brand } from "@/lib/brand";
 export const metadata: Metadata = {
   title: `Explore the map — ${brand.name}`,
   description:
-    "Search sample Philippine listings by region, province, city, and map location.",
+    "Search Philippine land listings by region, province, city, and map location.",
   alternates: { canonical: "/explore" },
   openGraph: {
     title: `Explore the map — ${brand.name}`,

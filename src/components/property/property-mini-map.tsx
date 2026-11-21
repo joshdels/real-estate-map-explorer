@@ -55,18 +55,39 @@ function nearbyPin(place: NearbyPlace, icon: string): HTMLElement {
   return element;
 }
 
-// A grouped-count bubble shown while many places overlap. Clicking it zooms in
-// until the cluster breaks apart into individual pins.
-function clusterPin(count: number): HTMLElement {
+const CATEGORY_ORDER: NearbyCategory[] = ["school", "transport", "dining", "cafe", "groceries", "health", "finance"];
+
+function nearbySourceId(category: NearbyCategory): string {
+  return `nearby-src-${category}`;
+}
+
+// Categories cluster independently, so every bubble keeps one clear category
+// icon even when the map is zoomed all the way out.
+function updateClusterPin(element: HTMLElement, count: number, category: NearbyCategory): void {
+  const icons = document.createElement("span");
+  icons.className = "nearby-cluster-icons";
+  icons.setAttribute("aria-hidden", "true");
+  const icon = document.createElement("span");
+  icon.className = "nearby-cluster-icon";
+  const glyph = document.createElement("i");
+  glyph.className = `ph ph-${CATEGORY_ICON[category]}`;
+  icon.append(glyph);
+  icons.append(icon);
+  const total = document.createElement("span");
+  total.className = "nearby-cluster-count";
+  total.textContent = String(count);
+  element.replaceChildren(icons, total);
+  element.setAttribute(
+    "aria-label",
+    `${count} ${category} places here. Zoom in to separate them.`,
+  );
+}
+
+function clusterPin(count: number, category: NearbyCategory): HTMLElement {
   const element = document.createElement("button");
   element.type = "button";
-  element.className = "nearby-cluster";
-  element.textContent = String(count);
-  element.setAttribute("aria-label", `${count} places here. Zoom in to separate them.`);
-  // Scale the bubble a little with the count so a big group reads as bigger.
-  const size = count < 10 ? 34 : count < 50 ? 40 : 46;
-  element.style.width = `${size}px`;
-  element.style.height = `${size}px`;
+  element.className = `nearby-cluster nearby-cluster-${category}`;
+  updateClusterPin(element, count, category);
   return element;
 }
 
@@ -130,7 +151,7 @@ export function PropertyMiniMap({
       zoom: 16,
       minZoom: 10,
       maxZoom: 18,
-      attributionControl: { compact: true },
+      attributionControl: false,
     });
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
@@ -151,10 +172,12 @@ export function PropertyMiniMap({
     // Sync HTML markers to whatever the cluster source renders in view: grouped
     // places collapse into a numbered bubble, and single places show a pin.
     const updateMarkers = () => {
-      const src = map.getSource("nearby-src") as maplibregl.GeoJSONSource | undefined;
-      if (!src) return;
       const next: Record<string, maplibregl.Marker> = {};
-      for (const feature of map.querySourceFeatures("nearby-src")) {
+      for (const category of CATEGORY_ORDER) {
+        const sourceId = nearbySourceId(category);
+        const src = map.getSource(sourceId) as maplibregl.GeoJSONSource | undefined;
+        if (!src) continue;
+        for (const feature of map.querySourceFeatures(sourceId)) {
         if (feature.geometry.type !== "Point") continue;
         const [flng, flat] = feature.geometry.coordinates as [number, number];
         const props = feature.properties as Record<string, unknown>;
@@ -164,10 +187,10 @@ export function PropertyMiniMap({
         if (props.cluster) {
           const clusterId = props.cluster_id as number;
           const count = props.point_count as number;
-          id = `c${clusterId}`;
+          id = `c${category}-${clusterId}`;
           marker = markersById.current[id];
           if (!marker) {
-            const element = clusterPin(count);
+            const element = clusterPin(count, category);
             element.addEventListener("click", () => {
               src
                 .getClusterExpansionZoom(clusterId)
@@ -183,10 +206,10 @@ export function PropertyMiniMap({
             marker = new maplibregl.Marker({ element, anchor: "center" }).setLngLat([flng, flat]);
             markersById.current[id] = marker;
           } else {
-            marker.getElement().textContent = String(count);
+            updateClusterPin(marker.getElement(), count, category);
           }
         } else {
-          id = `p${props.pid}`;
+          id = `p${category}-${props.pid}`;
           marker = markersById.current[id];
           if (!marker) {
             const category = props.category as NearbyCategory;
@@ -222,6 +245,7 @@ export function PropertyMiniMap({
         }
         next[id] = marker;
         if (!markersOnScreen.current[id]) marker.addTo(map);
+        }
       }
       for (const id of Object.keys(markersOnScreen.current)) {
         if (!next[id]) markersOnScreen.current[id].remove();
@@ -243,20 +267,23 @@ export function PropertyMiniMap({
 
       // Cluster source for the nearby places. Groups break apart above
       // clusterMaxZoom, so zooming in reveals the individual pins.
-      map.addSource("nearby-src", {
-        type: "geojson",
-        data: { type: "FeatureCollection", features: [] },
-        cluster: true,
-        clusterRadius: 55,
-        clusterMaxZoom: 15,
-      });
-      // An invisible layer keeps the source instantiated so querySourceFeatures
-      // returns its clusters and points; the visible marks are the HTML markers.
-      map.addLayer({
-        id: "nearby-src-probe",
-        type: "circle",
-        source: "nearby-src",
-        paint: { "circle-radius": 0, "circle-opacity": 0 },
+      CATEGORY_ORDER.forEach((category) => {
+        const sourceId = nearbySourceId(category);
+        map.addSource(sourceId, {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+          cluster: true,
+          clusterRadius: 55,
+          clusterMaxZoom: 15,
+        });
+        // An invisible layer keeps each category source instantiated so
+        // querySourceFeatures returns its clusters and individual points.
+        map.addLayer({
+          id: `${sourceId}-probe`,
+          type: "circle",
+          source: sourceId,
+          paint: { "circle-radius": 0, "circle-opacity": 0 },
+        });
       });
       map.on("render", updateMarkers);
 
@@ -292,31 +319,37 @@ export function PropertyMiniMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    const src = map.getSource("nearby-src") as maplibregl.GeoJSONSource | undefined;
-    if (!src) return;
-
     const shown = activeCategory ? nearby.filter((place) => place.category === activeCategory) : nearby;
-    src.setData({
-      type: "FeatureCollection",
-      features: shown.map((place) => ({
-        type: "Feature",
-        properties: {
-          pid: place.id,
-          category: place.category,
-          name: place.name,
-          distanceM: place.distanceM,
-          subtype: place.subtype,
-        },
-        geometry: { type: "Point", coordinates: [place.coordinates[1], place.coordinates[0]] },
-      })),
+    CATEGORY_ORDER.forEach((category) => {
+      const src = map.getSource(nearbySourceId(category)) as maplibregl.GeoJSONSource | undefined;
+      if (!src) return;
+      src.setData({
+        type: "FeatureCollection",
+        features: shown.filter((place) => place.category === category).map((place) => ({
+          type: "Feature",
+          properties: {
+            pid: place.id,
+            category: place.category,
+            name: place.name,
+            distanceM: place.distanceM,
+            subtype: place.subtype,
+          },
+          geometry: { type: "Point", coordinates: [place.coordinates[1], place.coordinates[0]] },
+        })),
+      });
     });
 
-    // When a single category is toggled, frame the lot and those places so the
-    // map visibly moves to that set of points.
-    if (activeCategory && shown.length > 0) {
+    // Frame the lot with every currently shown place. On first load this gives
+    // the All view a useful city-level cluster overview instead of starting
+    // tightly on the lot; category filters then refit to their own places.
+    if (shown.length > 0) {
       const box = new maplibregl.LngLatBounds([coordinates[1], coordinates[0]], [coordinates[1], coordinates[0]]);
       shown.forEach((place) => box.extend([place.coordinates[1], place.coordinates[0]]));
-      map.fitBounds(box, { padding: 56, maxZoom: 16, duration: reducedMotion() ? 0 : 600 });
+      map.fitBounds(box, {
+        padding: 56,
+        maxZoom: activeCategory ? 16 : 14,
+        duration: reducedMotion() ? 0 : 600,
+      });
     } else if (polygon && polygon.length >= 3) {
       map.fitBounds(bounds(polygon), { padding: 64, maxZoom: 17, duration: reducedMotion() ? 0 : 600 });
     }

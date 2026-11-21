@@ -1,39 +1,14 @@
-import type { User } from "@supabase/supabase-js";
-import type { Provider } from "@supabase/supabase-js";
 import { qs } from "@/explorer/dom";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getCurrentUser, logoutFromDjango, type DjangoUser } from "@/lib/django-auth";
+import { isProductionMode } from "@/lib/runtime-mode";
 
 export class AuthController {
-  private readonly client = createSupabaseBrowserClient();
-  private user: User | null = null;
+  private user: DjangoUser | null = null;
 
   async initialize(): Promise<void> {
-    const googleSignIn = qs<HTMLButtonElement>("#google-sign-in");
-    const facebookSignIn = qs<HTMLButtonElement>("#facebook-sign-in");
-    const signOut = qs<HTMLButtonElement>("#google-sign-out");
-    googleSignIn.addEventListener("click", () =>
-      void this.signIn("google", "Google"),
-    );
-    facebookSignIn.addEventListener("click", () =>
-      void this.signIn("facebook", "Facebook"),
-    );
+    const signOut = qs<HTMLButtonElement>("#django-sign-out");
     signOut.addEventListener("click", () => void this.signOut());
-
-    const error = new URLSearchParams(window.location.search).get("auth_error");
-    if (error) {
-      qs("#auth-status").textContent = error;
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-    if (!this.client) {
-      this.render();
-      return;
-    }
-    const { data } = await this.client.auth.getUser();
-    this.user = data.user;
-    this.client.auth.onAuthStateChange((_event, session) => {
-      this.user = session?.user ?? null;
-      this.render();
-    });
+    this.user = await getCurrentUser();
     this.render();
   }
 
@@ -41,38 +16,27 @@ export class AuthController {
     return Boolean(this.user);
   }
 
-  private async signIn(provider: Provider, label: string): Promise<void> {
-    if (!this.client) {
-      qs("#auth-status").textContent =
-        `Supabase must be configured before ${label} sign-in can be used.`;
-      return;
-    }
-    qs("#auth-status").textContent = `Opening ${label} sign-in…`;
-    const { error } = await this.client.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/explore`,
-      },
-    });
-    if (error) qs("#auth-status").textContent = error.message;
-  }
-
   private async signOut(): Promise<void> {
-    const { error } = (await this.client?.auth.signOut()) ?? {};
-    qs("#auth-status").textContent = error
-      ? error.message
-      : "You have been signed out.";
+    try {
+      await logoutFromDjango();
+      this.user = null;
+      this.render();
+      qs("#auth-status").textContent = "You have been signed out.";
+    } catch (error) {
+      qs("#auth-status").textContent =
+        error instanceof Error ? error.message : "Sign out failed.";
+    }
   }
 
   private render(): void {
-    const googleSignIn = qs<HTMLButtonElement>("#google-sign-in");
-    const facebookSignIn = qs<HTMLButtonElement>("#facebook-sign-in");
-    const signOut = qs<HTMLButtonElement>("#google-sign-out");
-    googleSignIn.hidden = Boolean(this.user);
-    facebookSignIn.hidden = Boolean(this.user);
+    const signIn = qs<HTMLElement>("#django-sign-in");
+    const signOut = qs<HTMLButtonElement>("#django-sign-out");
+    signIn.hidden = Boolean(this.user);
     signOut.hidden = !this.user;
     qs("#auth-status").textContent = this.user
-      ? `Signed in as ${this.user.email ?? "authenticated user"}.`
-      : "Sign in with an authorized Google or Facebook account for Supabase-backed admin writes, or use the local passcode for this browser only.";
+      ? `Signed in as ${this.user.email}.`
+      : isProductionMode
+        ? "Sign in with your email and password."
+        : "Sign in with your email and password, or use a local demo passcode.";
   }
 }

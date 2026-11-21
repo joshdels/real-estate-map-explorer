@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Buildings, ChartLineUp, MapTrifold } from "@phosphor-icons/react/dist/ssr";
 import { brand } from "@/lib/brand";
+import { isProductionMode } from "@/lib/runtime-mode";
 
 export function BecomeProvider() {
   return (
@@ -41,10 +42,10 @@ export function BecomeProvider() {
       </section>
 
       <section className="page-section provider-final" aria-labelledby="provider-final-title">
-        <div><p className="section-kicker">Take the lead</p><h2 id="provider-final-title">Create your provider profile</h2><p>This demo stores profile and listing changes in the configured data provider or this browser. It is not a secure production account.</p></div>
+        <div><p className="section-kicker">Take the lead</p><h2 id="provider-final-title">Create your provider profile</h2><p>{isProductionMode ? "Sign in to create your provider profile and publish land listings." : "This demo stores profile and listing changes in the configured data provider or this browser. It is not a secure production account."}</p></div>
         <Link className="primary-action" href="/dashboard">Open provider setup</Link>
       </section>
-      <p className="sample-band" role="note">{brand.sampleNotice}</p>
+      {!isProductionMode ? <p className="sample-band" role="note">{brand.sampleNotice}</p> : null}
     </>
   );
 }

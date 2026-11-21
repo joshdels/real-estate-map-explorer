@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { Property } from "@/lib/types";
+import { isProductionMode } from "@/lib/runtime-mode";
 
 const LOT_SHAPES = [
   { points: "95,92 290,58 344,196 162,234", labelX: 210, labelY: 147 },
@@ -14,6 +15,7 @@ const statusClass = (status: Property["status"]) =>
   `masterplan-lot status-${status.toLowerCase()}`;
 
 export function ProviderMasterplan({ listings }: { listings: Property[] }) {
+  if (isProductionMode) return null;
   const visible = listings.slice(0, LOT_SHAPES.length);
   const count = (status: Property["status"]) =>
     visible.filter((listing) => listing.status === status).length;

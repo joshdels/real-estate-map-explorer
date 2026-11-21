@@ -2,7 +2,7 @@
 
 React hooks that connect components to `src/lib`. Adds to the root and `src/AGENTS.md`.
 
-- `use-dataset.ts` — `useDataset()` returns `{ data, ready, failed, mutate }`. `data` is the bundled seed during server render and first paint, then the live `PropertyStore` snapshot. `getStore()` creates one store per page load.
+- `use-dataset.ts` — `useDataset()` returns `{ data, ready, failed, mutate }`. `data` is the bundled seed during development server render and first paint, but an empty dataset in production mode, then the live `PropertyStore` snapshot. `getStore()` creates one store per page load.
 - `use-session.ts` — `useSession()` returns the local demo session and a refresh function. Backed by `useSyncExternalStore`; call refresh after `setSession()` / `clearSession()`.
 - `use-boundary-index.ts` — `useBoundaryIndex()` loads the region / province / city lookup once.
 

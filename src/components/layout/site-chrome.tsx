@@ -6,6 +6,7 @@ import { List, X } from "@phosphor-icons/react";
 import { brand } from "@/lib/brand";
 import { clearSession } from "@/lib/session";
 import { useSession } from "@/hooks/use-session";
+import { isProductionMode } from "@/lib/runtime-mode";
 
 // Links to /explore are plain anchors on purpose: the map explorer attaches
 // its behavior once per page load, so it must be entered with a full navigation.
@@ -124,7 +125,7 @@ export function SiteFooter() {
 
         <div className="site-footer-bottom">
           <p>© {new Date().getFullYear()} {brand.name}</p>
-          <p>Sample listings are not verified. {brand.boundaryCredit}</p>
+          <p>{!isProductionMode ? "Sample listings are not verified. " : ""}{brand.boundaryCredit}</p>
         </div>
       </div>
     </footer>

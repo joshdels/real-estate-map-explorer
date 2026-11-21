@@ -14,6 +14,7 @@ import {
 import { PropertyMedia } from "@/components/property/property-media";
 import { PropertyNearby } from "@/components/property/property-nearby";
 import { AgentContactCard } from "@/components/property/agent-contact-card";
+import { isProductionMode } from "@/lib/runtime-mode";
 
 function UtilityIcon({ name }: { name: string }) {
   const key = name.toLocaleLowerCase();
@@ -47,7 +48,11 @@ export function PropertyView({ id }: { id: string }) {
     );
 
   const suppliedImages = property.media?.images?.filter(Boolean) ?? [];
-  const images = suppliedImages.length > 0 ? suppliedImages : ["/images/sample-aerial-lot-plan.webp"];
+  const images = suppliedImages.length > 0
+    ? suppliedImages
+    : isProductionMode
+      ? []
+      : ["/images/sample-aerial-lot-plan.webp"];
   const mapHref = `/explore?property=${encodeURIComponent(property.id)}`;
   const utilities = Object.entries(property.utilities ?? {});
   const provider = data.providers.find((item) => item.id === property.providerId);
@@ -73,7 +78,8 @@ export function PropertyView({ id }: { id: string }) {
       <header className="detail-headline">
         <div className="detail-headline-main">
           <p className="detail-kicker">
-            {PURPOSE_LABELS[property.purpose ?? "sale"]} · {TYPE_LABELS[property.propertyType ?? "lot"]} · Sample data
+            {PURPOSE_LABELS[property.purpose ?? "sale"]} · {TYPE_LABELS[property.propertyType ?? "lot"]}
+            {!isProductionMode ? " · Sample data" : ""}
           </p>
           <h1 className="detail-headline-title">{property.title}</h1>
           <p className="detail-headline-address">
@@ -175,9 +181,8 @@ export function PropertyView({ id }: { id: string }) {
           ) : null}
           <PropertyNearby id={property.id} coordinates={property.coordinates} polygon={property.polygon} />
           <p className="detail-note">
-            Approximate lot plan and satellite location. This is open listing data,
-            not a surveyed boundary. This fictional sample must be independently
-            verified.
+            Lot boundaries are approximate and are not surveyed.
+            {!isProductionMode ? " This fictional sample must be independently verified." : ""}
           </p>
         </section>
         </div>

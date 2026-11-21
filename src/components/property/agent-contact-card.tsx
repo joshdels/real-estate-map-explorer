@@ -6,6 +6,7 @@ import {
   MessengerLogo,
 } from "@phosphor-icons/react";
 import type { Agent } from "@/lib/types";
+import { isProductionMode } from "@/lib/runtime-mode";
 
 /**
  * Compact "Call or text now" card for the lot's assigned specialist. Reads the
@@ -71,7 +72,7 @@ export function AgentContactCard({ agent }: { agent?: Agent }) {
             </a>
           ) : null}
         </div>
-        <p className="agent-contact-note">Sample contact for this demo. Not a real person or number.</p>
+        {!isProductionMode ? <p className="agent-contact-note">Sample contact for this demo. Not a real person or number.</p> : null}
       </div>
     </section>
   );

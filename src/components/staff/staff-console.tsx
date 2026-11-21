@@ -34,6 +34,7 @@ import type {
 } from "@/lib/types";
 import { useDataset } from "@/hooks/use-dataset";
 import { useSession } from "@/hooks/use-session";
+import { isProductionMode } from "@/lib/runtime-mode";
 
 type Tab = "queue" | "flags" | "assisted" | "suspended" | "providers" | "activity";
 
@@ -56,6 +57,17 @@ export function StaffConsole() {
     setCases(listAssistedCases());
     setActivity(listActivity());
   };
+
+  if (isProductionMode && !isStaff(session)) {
+    return (
+      <section className="page-section" aria-labelledby="staff-access-title">
+        <p className="section-kicker">Admin and employee access</p>
+        <h1 id="staff-access-title">Sign in to open the staff console</h1>
+        <p className="section-lead">Review listings, handle reports, and assist providers.</p>
+        <Link className="primary-action" href="/login">Sign in</Link>
+      </section>
+    );
+  }
 
   if (!isStaff(session))
     return (
@@ -254,7 +266,7 @@ export function StaffConsole() {
                 </select>
               </label>
               <label>Listing notes<textarea name="notes" rows={3} maxLength={600} placeholder="Property type, location, what the client still needs to send" /></label>
-              <p className="demo-warning" role="note">Do not enter phone numbers, addresses of owners, IDs, or other private details. This demo has no access control.</p>
+              <p className="demo-warning" role="note">Do not enter IDs or private contact details in case notes.</p>
               <button className="primary-action" type="submit">Open case</button>
             </form>
             <ul className="work-list">

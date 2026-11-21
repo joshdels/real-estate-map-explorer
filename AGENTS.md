@@ -27,7 +27,6 @@ src/explorer/     Imperative MapLibre explorer modules (map, workspace, media)
 src/styles/       Design tokens and CSS
 public/data/      Fictional seed dataset and the simplified boundary index (published as-is; see the seed-data skill)
 scripts/          Boundary build and database load scripts
-supabase/         Migrations and seed guidance
 tests/            Vitest suites
 docs/             Architecture and business planning
 .claude/skills/   Step-by-step workflows, readable by any agent
@@ -79,7 +78,7 @@ The primary workflow is: choose an area, explore map results, refine filters, se
 - New properties, routes, and destinations appear on the public map without a reload.
 - Route lines and destination markers stay hidden until an explicit **Routes** action, and hide again when selection closes or changes.
 - **Lot Layout** toggles calculated edge lengths and perimeter. These are geodesic estimates, never surveyed values.
-- Persist through the configured repository, falling back to `localStorage` when Supabase is unavailable or rejects a write. Never rewrite `public/data/data.json` from the browser.
+- Persist through the Django API repository, falling back to `localStorage` when the API is unavailable or rejects a write. Never rewrite `public/data/data.json` from the browser.
 - Missing media keeps its action disabled; it must not open an empty viewer.
 - Opening a lot detail page shows the shared aerial loading screen and progress bar immediately, including links created by the explorer.
 
@@ -139,11 +138,11 @@ Workflows live in `.claude/skills/<name>/SKILL.md`. Claude Code loads them autom
 
 Ordered by value. When you finish one, remove it and note what changed in `README.md`.
 
-1. **Real accounts and roles.** Replace the demo passcodes with Supabase Auth, a `profiles` table with roles, and RLS so clients edit only their own listings and only staff can moderate.
+1. **Real accounts and roles.** Connect Django-authenticated profiles and roles to every dashboard and staff permission so clients edit only their own listings and only staff can moderate.
 2. **Normalized tables.** Move listings, providers, groups, reviews, reports, and assisted cases out of the single `app_datasets` JSON row into tables with server-side validation.
 3. **Server-side reports and moderation.** Reports are per-browser today, so staff only see flags raised on their own device.
 4. **PostGIS area lookup.** Use `locate_admin_area()` (migration `20261115000000`) once the boundary tables are loaded, and add barangay level.
-5. **Media uploads.** Supabase Storage with size/type checks instead of pasted URLs.
+5. **Media uploads.** Django storage with size/type checks instead of pasted URLs.
 6. **Listing edit form.** Listings can be created, re-grouped, re-statused, and removed, but not edited field by field.
 7. **Buyer tools.** Saved listings, side-by-side comparison, and inquiry forms routed to the provider.
 8. **Map scale.** Marker clustering and viewport-based loading before the listing count grows.

@@ -12,6 +12,7 @@ import type {
 } from "@/lib/types";
 import { addReport, listReports, removeReport } from "@/lib/local-records";
 import { LocalRepository } from "@/lib/repositories/local-repository";
+import { isProductionMode } from "@/lib/runtime-mode";
 import { validateDataset } from "@/lib/validation";
 
 export class PropertyStore {
@@ -21,6 +22,7 @@ export class PropertyStore {
     try {
       this.data = validateDataset(await this.repository.load());
     } catch (error) {
+      if (isProductionMode) throw error;
       console.warn(
         "Primary data load failed; loading validated JSON fallback.",
         error,

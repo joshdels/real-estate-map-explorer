@@ -21,6 +21,7 @@ import {
 } from "@/lib/nearby";
 import { PropertyMiniMap, type BasemapKey } from "@/components/property/property-mini-map";
 import type { Coordinate } from "@/lib/types";
+import { isProductionMode } from "@/lib/runtime-mode";
 
 const CATEGORY_ICON: Record<NearbyCategory, Icon> = {
   school: GraduationCap,
@@ -55,7 +56,7 @@ export function PropertyNearby({
   const [active, setActive] = useState<NearbyCategory | null>(null);
   // Start with the illustrative sample so the section renders immediately, then
   // replace it with real OpenStreetMap data once the lookup returns.
-  const [places, setPlaces] = useState<NearbyPlace[]>(() => samplePlaces({ id, coordinates }));
+  const [places, setPlaces] = useState<NearbyPlace[]>(() => isProductionMode ? [] : samplePlaces({ id, coordinates }));
   const [source, setSource] = useState<"osm" | "sample">("sample");
   const [status, setStatus] = useState<Status>("loading");
   const mapWrapRef = useRef<HTMLDivElement>(null);
@@ -66,6 +67,11 @@ export function PropertyNearby({
     fetchNearbyPlaces({ id, coordinates }, controller.signal)
       .then((result) => {
         if (cancelled) return;
+        if (isProductionMode && result.source === "sample") {
+          setPlaces([]);
+          setStatus("error");
+          return;
+        }
         setPlaces(result.places);
         setSource(result.source);
         setStatus(result.source === "osm" ? "ready" : "error");
@@ -93,20 +99,6 @@ export function PropertyNearby({
 
   return (
     <div className="detail-nearby">
-      <div className="detail-map-toolbar" role="group" aria-label="Map layer">
-        {BASEMAPS.map((option) => (
-          <button
-            key={option.key}
-            type="button"
-            className="detail-map-layer"
-            aria-pressed={basemap === option.key}
-            onClick={() => setBasemap(option.key)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-
       <div ref={mapWrapRef}>
         <PropertyMiniMap
           coordinates={coordinates}
@@ -115,6 +107,23 @@ export function PropertyNearby({
           activeCategory={active}
           basemap={basemap}
         />
+      </div>
+
+      <div className="detail-map-controls">
+        <div className="detail-map-toolbar" role="group" aria-label="Map layer">
+          {BASEMAPS.map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              className="detail-map-layer"
+              aria-pressed={basemap === option.key}
+              onClick={() => setBasemap(option.key)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <p className="detail-map-credit">{basemap === "osm" ? "© OpenStreetMap" : "© Esri"}</p>
       </div>
 
       {/* Legend and filter: the important neighbourhood categories. */}
@@ -151,7 +160,9 @@ export function PropertyNearby({
           ? "Finding nearby places from OpenStreetMap…"
           : source === "osm"
             ? "Nearby places from OpenStreetMap, by straight-line distance from the lot."
-            : "Could not reach OpenStreetMap. Showing illustrative sample places only, not verified amenities."}
+            : isProductionMode
+              ? "Nearby places are unavailable right now."
+              : "Could not reach OpenStreetMap. Showing illustrative sample places only, not verified amenities."}
       </p>
 
       <div className="detail-nearby-groups">

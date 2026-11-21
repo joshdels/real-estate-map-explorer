@@ -174,7 +174,7 @@ export interface Dataset {
 }
 
 export interface DataRepository {
-  readonly source: "supabase" | "local";
+  readonly source: "django" | "local";
   load(): Promise<Dataset>;
   save(data: Dataset): Promise<void>;
 }

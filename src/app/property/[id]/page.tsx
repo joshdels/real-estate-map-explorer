@@ -6,6 +6,7 @@ import { formatPrice, isPublic, providerRatings } from "@/lib/listings";
 import { seedDataset } from "@/lib/seed";
 import { SITE_URL, listingGraph } from "@/lib/seo";
 import { PropertyView } from "@/components/property/property-view";
+import { isProductionMode } from "@/lib/runtime-mode";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const title = `${property.title} — ${formatPrice(property)} | ${brand.name}`;
   const description =
     property.description ||
-    `${property.area} ${property.status} lot for sale at ${property.address}. Sample lot plan on ${brand.name}.`;
+    `${property.area} ${property.status} lot for sale at ${property.address}.${isProductionMode ? "" : ` Sample lot plan on ${brand.name}.`}`;
   const image = property.media?.images?.[0];
   const url = `${SITE_URL}/property/${property.id}`;
   return {

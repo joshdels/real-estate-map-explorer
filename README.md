@@ -31,13 +31,8 @@ scripts/build-boundaries.sh /path/to/boundary-shapefiles   # needs GDAL and Node
 
 The source shapefiles are about 1.6 GB and are not in the repository. A literal 1 m simplification still leaves about 80 MB per layer, so the web copy uses about 110 m for cities and 330 m for provinces. Points that fall in a simplification gap use the nearest outline within 15 km and are marked approximate.
 
-To load the boundaries into Postgres (local or hosted Supabase), apply `supabase/migrations/20261115000000_create_admin_boundaries.sql`, then:
-
-```bash
-SUPABASE_DB_URL='postgresql://...' scripts/load-boundaries-db.sh /path/to/boundary-shapefiles
-```
-
-This creates `admin_regions`, `admin_provinces`, `admin_cities` and the `locate_admin_area(lat, lng)` function. The app does not call the database function yet; it reads the static files.
+The app currently reads the static boundary files. A later backend phase will move administrative
+area lookup into PostGIS through Django REST Framework.
 
 ### Roles (local demo only)
 
@@ -47,7 +42,12 @@ This creates `admin_regions`, `admin_provinces`, `admin_cities` and the `locate_
 | Employee | `/staff`, passcode `staff` | Mark listings reviewed, suspend listings, dismiss reports, keep or remove flagged reviews, manage assisted cases, add providers |
 | Administrator | `/staff`, passcode `admin` | Everything above, plus restore or delete suspended listings, mark providers staff reviewed, view the activity log |
 
-The passcodes are public and stored in session storage. They protect nothing. Reports, assisted cases, and the activity log are kept in the browser's local storage, so staff see only flags raised on the same device. New listings are public immediately and labeled “not yet reviewed by staff”; “Staff reviewed” means a staff member looked at the listing, not that ownership, price, or boundaries were verified. Real use needs Supabase Auth, per-user ownership, and server-side authorization (see the upgrade backlog in `AGENTS.md`).
+The passcodes are public and stored in session storage. They protect nothing. Email/password login
+uses Django and HTTP-only cookies, but dashboard and staff permissions still need to be connected to
+the authenticated Django role. Reports, assisted cases, and the activity log remain in browser
+storage. New listings are public immediately and labeled “not yet reviewed by staff”; “Staff
+reviewed” means a staff member looked at the listing, not that ownership, price, or boundaries were
+verified.
 
 ### Search engine optimization
 
@@ -75,7 +75,9 @@ cp .env.example .env.local
 npm run dev
 ```
 
-The app runs at `http://localhost:3000`. Supabase variables are optional; without them, the validated seed in `public/data/data.json` is used and admin changes persist in `localStorage`.
+The app runs at `http://localhost:3000`. Set `NEXT_PUBLIC_API_URL=http://localhost:8000` to use the
+Django API. Without it, the validated seed in `public/data/data.json` is used and changes persist in
+`localStorage` for local demonstration only.
 
 ```bash
 npm run typecheck
@@ -97,15 +99,13 @@ src/
 │   ├── types.ts, validation.ts, store.ts, listings.ts
 │   ├── session.ts, local-records.ts, share.ts, brand.ts, seed.ts
 │   ├── geo/boundaries.ts     # point lookup over the boundary files
-│   ├── repositories/         # local and Supabase adapters
-│   └── supabase/             # typed browser/server clients
+│   ├── django-auth.ts         # DRF email/password and cookie-session client
+│   └── repositories/         # Django API and local fallback adapters
 ├── explorer/                 # Imperative MapLibre explorer (map, workspace, media)
 ├── styles/                   # tokens.css, components.css, layout.css, site.css
-└── proxy.ts                  # Next.js 16 proxy: Supabase session refresh
 public/data/data.json         # Fictional seed
 public/data/boundaries/       # Generated boundary index
 scripts/                      # Boundary build and database load
-supabase/                     # Migrations
 tests/                        # Vitest suites
 .claude/skills/               # Shared agent workflows
 ```
@@ -118,47 +118,37 @@ MapLibre 6 loads `public/maplibre-gl-worker.mjs` from the same origin because Ne
 
 `AGENTS.md` (root and one per major folder) is the single source of instructions for Claude Code, Codex / GPT, and other agents. Each `CLAUDE.md` only imports the `AGENTS.md` beside it. Shared workflows are in `.claude/skills/` (`verify`, `add-feature`, `seed-data`, `boundaries`, `design-review`, `improve`); Claude Code loads them automatically and other agents can read the `SKILL.md` files directly.
 
-## Supabase setup
+## Django API setup
 
-1. Create or link a Supabase project.
-2. Apply `supabase/migrations/20261110000000_create_app_datasets.sql` through the Supabase CLI or SQL editor.
-3. Insert a trusted `public.app_datasets` row with `slug = 'default'` and a validated payload shaped like `public/data/data.json`. Update this row whenever `data.json` changes; an older payload still loads, but without providers, groups, reviews, or official areas.
-4. Copy `.env.example` to `.env.local` and set:
+The sibling `real-estate-map-backend` project implements the Stage 1 DRF dataset contract. Run it on `http://localhost:8000`, seed it from this repository's `public/data/data.json`, and set:
 
 ```dotenv
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_APP_MODE=development
 ```
 
-Find both values in the Supabase dashboard under **Project Settings → API** (or **Settings → API Keys** in the current dashboard). Only the URL and publishable key are browser-visible. The legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` name remains supported for existing deployments. Never use a secret or service-role key in a `NEXT_PUBLIC_*` variable. RLS permits anonymous reads of the default dataset and requires an authenticated Supabase user for writes. The visible local passcodes (`admin`, `staff`) are a UI convenience, not backend authentication; until an auth flow exists, rejected remote writes fall back to local storage.
+When this variable is present, the app loads and saves through Django first and falls back to the
+validated local sample if the API is unavailable. Email/password login also uses the Django API.
+Google and Facebook login are not part of the active frontend.
 
-The app tests the remote dataset during startup and falls back to the validated local sample after six seconds if Supabase is unavailable or incomplete, so a provider issue does not leave the map blocked.
+For deployment, set `NEXT_PUBLIC_APP_MODE=production` together with a working `NEXT_PUBLIC_API_URL`. Production mode never renders the bundled fictional dataset, never falls back to browser seed data, hides local passcode access, and omits demo-only copy and media. If the API is missing or unavailable, the interface shows an unavailable or empty state instead of sample records.
 
-### Google sign-in
+Detailed documentation:
 
-1. In Google Auth Platform, create a **Web application** OAuth client. Add the app origin (for example `http://localhost:3000`) under authorized JavaScript origins.
-2. In Supabase **Authentication → Providers → Google**, copy the displayed Supabase callback URL into Google's authorized redirect URIs, enter the Google Client ID and Client Secret, and enable the provider.
-3. In Supabase **Authentication → URL Configuration**, set the Site URL and add `http://localhost:3000/auth/callback` (plus the production equivalent) to the redirect allow list.
-
-The app uses Supabase's PKCE callback at `/auth/callback` and refreshes cookie sessions through the Next.js 16 proxy. Google-authenticated users satisfy the existing `authenticated` RLS write policies. The documented demo passcodes remain local-only and cannot grant Supabase write access.
-
-### Facebook sign-in
-
-1. Create a Facebook app in the [Meta for Developers dashboard](https://developers.facebook.com/) and add the Facebook Login product.
-2. In **Facebook Login → Settings**, add the Supabase callback URL shown under **Supabase Authentication → Providers → Facebook** as a valid OAuth redirect URI. It follows `https://<project-ref>.supabase.co/auth/v1/callback`; local Supabase uses `http://localhost:54321/auth/v1/callback`.
-3. Enable both `public_profile` and `email` for the app's authentication use case. Supabase requires the email permission for a complete user identity.
-4. Copy the Facebook App ID and App Secret into the Facebook provider settings in Supabase and enable the provider.
-5. Keep `http://localhost:3000/auth/callback` and the production callback route in the Supabase redirect allow list.
-
-Facebook apps begin in development mode, where only app administrators, developers, and testers can sign in. Complete Meta's required app details and review steps before enabling Facebook sign-in for the public. The application uses the same Supabase PKCE callback and RLS-backed authenticated role for Google and Facebook; it never exposes the Facebook App Secret to the browser.
-
-For local Supabase development, install the Supabase CLI and run `supabase start`, then `supabase db reset`. Regenerate `src/lib/supabase/database.types.ts` after schema changes when a project is linked.
+- [`docs/API.md`](docs/API.md): endpoints, cookies, CORS, errors, and fallback behavior.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): runtime, data flow, and trust boundaries.
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md): production setup, verification, operations, and rollback.
+- [`docs/MIGRATION_DJANGO_DRF.md`](docs/MIGRATION_DJANGO_DRF.md): completed and remaining migration work.
 
 ## Deployment
 
-Run `npm run build` and deploy to a Node-compatible Next.js platform such as Vercel. Configure the public Supabase variables in the deployment environment. `npm start` serves the production build.
+Run `npm run build` and deploy to a Node-compatible Next.js platform such as Vercel. Configure
+`NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_SITE_URL` in the deployment environment. `npm start` serves
+the production build.
 
-Before publishing real inventory, add Supabase Auth and roles, server-side authorization and validation, normalized property tables if query needs justify them, audit history, backups, approved media storage, and a listing-verification workflow.
+Before publishing real inventory, connect every UI permission to Django roles, normalize the domain
+tables, add server-side reports and audit history, automate backups, provide approved media storage,
+and establish a listing-verification workflow.
 
 See `docs/ARCHITECTURE.md` for trust boundaries and fallback behavior.
 
